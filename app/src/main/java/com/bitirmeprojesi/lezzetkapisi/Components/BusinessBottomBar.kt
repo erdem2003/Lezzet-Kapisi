@@ -416,4 +416,4 @@ fun NavController.navigateSingleTop(route: String) {
     }
 }
 
-//veriyi çek
+//veriyi çekemedim
