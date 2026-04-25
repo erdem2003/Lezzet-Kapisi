@@ -28,6 +28,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 
+//erdem deneme
 // ─── Renk paleti (Mavi ton) ───────────────────────────────────────────────────
 private object NavColors {
     val nav_active        = Color(0xFF1D6FD8)
