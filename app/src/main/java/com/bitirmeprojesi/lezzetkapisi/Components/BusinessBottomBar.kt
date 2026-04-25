@@ -27,7 +27,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-//erdem
+
 // ─── Renk paleti ──────────────────────────────────────────────────────────────
 private object NavColors {
     val nav_active        = Color(0xFF7C3AED)
