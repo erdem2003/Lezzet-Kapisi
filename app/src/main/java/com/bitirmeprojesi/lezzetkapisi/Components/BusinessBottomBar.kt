@@ -415,3 +415,5 @@ fun NavController.navigateSingleTop(route: String) {
         restoreState = true
     }
 }
+
+//veriyi çek
