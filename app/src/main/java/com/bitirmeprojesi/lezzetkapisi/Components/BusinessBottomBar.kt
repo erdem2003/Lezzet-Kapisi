@@ -28,25 +28,25 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 
-// ─── Renk paleti ──────────────────────────────────────────────────────────────
+// ─── Renk paleti (Mavi ton) ───────────────────────────────────────────────────
 private object NavColors {
-    val nav_active        = Color(0xFF7C3AED)
+    val nav_active        = Color(0xFF1D6FD8)
     val nav_inactive      = Color(0xFF9CA3AF)
     val nav_surface       = Color(0xFFFFFFFF)
     val nav_divider       = Color(0xFFF0F0F0)
-    val nav_indicator     = Color(0xFFEDE9FE)
+    val nav_indicator     = Color(0xFFDBEAFD)
 
-    val nav_ai_start         = Color(0xFF7C3AED)
-    val nav_ai_end           = Color(0xFFEC4899)
-    val nav_ai_start_pressed = Color(0xFF6D28D9)
-    val nav_ai_end_pressed   = Color(0xFFDB2777)
-    val nav_ai_shadow        = Color(0x597C3AED)
-    val nav_ai_label_active  = Color(0xFF7C3AED)
+    val nav_ai_start         = Color(0xFF1D6FD8)
+    val nav_ai_end           = Color(0xFF06B6D4)
+    val nav_ai_start_pressed = Color(0xFF1558B0)
+    val nav_ai_end_pressed   = Color(0xFF0891B2)
+    val nav_ai_shadow        = Color(0x591D6FD8)
+    val nav_ai_label_active  = Color(0xFF1D6FD8)
 
     val popup_bg      = Color(0xFFFFFFFF)
     val popup_shadow  = Color(0x22000000)
     val popup_divider = Color(0xFFEEEEEE)
-    val popup_hover   = Color(0xFFF5F3FF)
+    val popup_hover   = Color(0xFFEFF6FF)
 }
 
 data class BottomNavItem(
@@ -61,9 +61,9 @@ data class BottomNavItem(
 fun BusinessBottomBar(navController: NavController) {
 
     val items = listOf(
-        BottomNavItem("business_feed", "Home",    Icons.Outlined.Home,     Icons.Filled.Home),
-        BottomNavItem("search",        "Search",  Icons.Outlined.Search,   Icons.Filled.Search),
-        BottomNavItem("settings",      "Settings",Icons.Outlined.Settings, Icons.Filled.Settings),
+        BottomNavItem("business_feed", "Home",     Icons.Outlined.Home,     Icons.Filled.Home),
+        BottomNavItem("search",        "Search",   Icons.Outlined.Search,   Icons.Filled.Search),
+        BottomNavItem("settings",      "Settings", Icons.Outlined.Settings, Icons.Filled.Settings),
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -73,38 +73,14 @@ fun BusinessBottomBar(navController: NavController) {
 
     val isMenuSelected = currentRoute == "business_menu_add" || currentRoute == "business_menu_view"
 
+    // ── Tüm wrapper: popup + navbar birlikte, ama navbar sabit yükseklikte ────
     Box(modifier = Modifier.fillMaxWidth()) {
-        // ── Popup ──────────────────────────────────────────────────────────────
-        AnimatedVisibility(
-            visible = menuPopupVisible,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .zIndex(10f),
-            enter = fadeIn(tween(150)) + slideInVertically(tween(150)) { it / 2 },
-            exit  = fadeOut(tween(100)) + slideOutVertically(tween(100)) { it / 2 }
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 82.dp)
-            ) {
-                MenuPopup(
-                    onAddClick = {
-                        menuPopupVisible = false
-                        navController.navigateSingleTop("business_menu_add")
-                    },
-                    onViewClick = {
-                        menuPopupVisible = false
-                        navController.navigateSingleTop("business_menu_view")
-                    },
-                    onDismiss = { menuPopupVisible = false }
-                )
-            }
-        }
 
-        // ── Navbar ─────────────────────────────────────────────────────────────
+        // ── Navbar — her zaman sabit, popup tarafından itilmez ────────────────
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
             color = NavColors.nav_surface,
             shadowElevation = 0.dp
         ) {
@@ -119,7 +95,6 @@ fun BusinessBottomBar(navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Home
                     NavBarItem(
                         item = items[0],
                         isSelected = currentRoute == items[0].route,
@@ -129,7 +104,6 @@ fun BusinessBottomBar(navController: NavController) {
                         }
                     )
 
-                    // Search
                     NavBarItem(
                         item = items[1],
                         isSelected = currentRoute == items[1].route,
@@ -139,7 +113,6 @@ fun BusinessBottomBar(navController: NavController) {
                         }
                     )
 
-                    // AI Chat — merkezi gradient buton
                     AiChatButton(
                         isSelected = currentRoute == "chatbot",
                         onClick = {
@@ -148,14 +121,12 @@ fun BusinessBottomBar(navController: NavController) {
                         }
                     )
 
-                    // Menu (birleşik — popup açar)
                     MenuNavItem(
                         isSelected = isMenuSelected,
                         isPopupOpen = menuPopupVisible,
                         onClick = { menuPopupVisible = !menuPopupVisible }
                     )
 
-                    // Settings
                     NavBarItem(
                         item = items[2],
                         isSelected = currentRoute == items[2].route,
@@ -167,10 +138,36 @@ fun BusinessBottomBar(navController: NavController) {
                 }
             }
         }
+
+        // ── Popup — navbar'ın ÜSTÜNDE, onun yüksekliğini etkilemeden ──────────
+        // wrapContentSize ile kendi boyutunu alıyor, offset ile navbar'ın üstüne konuyor
+        AnimatedVisibility(
+            visible = menuPopupVisible,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                // navigationBarsPadding + navbar yüksekliği (66dp) + divider (1dp) + gap (8dp)
+                .navigationBarsPadding()
+                .padding(bottom = (66 + 1 + 8).dp)
+                .zIndex(10f),
+            enter = fadeIn(tween(150)) + slideInVertically(tween(150)) { it / 2 },
+            exit  = fadeOut(tween(100)) + slideOutVertically(tween(100)) { it / 2 }
+        ) {
+            MenuPopup(
+                onAddClick = {
+                    menuPopupVisible = false
+                    navController.navigateSingleTop("business_menu_add")
+                },
+                onViewClick = {
+                    menuPopupVisible = false
+                    navController.navigateSingleTop("business_menu_view")
+                },
+                onDismiss = { menuPopupVisible = false }
+            )
+        }
     }
 }
 
-// ─── Standart nav item (animasyonlu renk geçişi) ──────────────────────────────
+// ─── Standart nav item ────────────────────────────────────────────────────────
 @Composable
 private fun NavBarItem(
     item: BottomNavItem,
@@ -222,7 +219,7 @@ private fun NavBarItem(
     }
 }
 
-// ─── Birleşik Menu nav item ────────────────────────────────────────────────────
+// ─── Menu nav item ────────────────────────────────────────────────────────────
 @Composable
 private fun MenuNavItem(
     isSelected: Boolean,
@@ -415,5 +412,3 @@ fun NavController.navigateSingleTop(route: String) {
         restoreState = true
     }
 }
-
-//veriyi çekemedim
