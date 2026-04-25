@@ -31,7 +31,6 @@ class RegisterRepository {
             onError("Lütfen bütün alanları doldurunuz")
             return
         }
-
         checkUsername(username,
             onAvailable = {
                 // Username müsaitse kayda devam et

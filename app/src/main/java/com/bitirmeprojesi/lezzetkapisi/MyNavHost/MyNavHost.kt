@@ -5,10 +5,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessScreen
+import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessFeedScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.RegisterScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.StartScreen
-import com.bitirmeprojesi.lezzetkapisi.Screens.UserScreen
+import com.bitirmeprojesi.lezzetkapisi.Screens.UserFeedScreen
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.RegisterViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.StartViewModel
 import com.erdemkilic.bitirme_projesi.Screens.LoginScreen
@@ -38,11 +38,26 @@ fun MyNavHost(navController: NavHostController){
         }
 
         composable("business_feed") {
-            BusinessScreen()
+            BusinessFeedScreen(navController)
         }
+        composable("search") {
 
+        }
+        composable("chatbot") {
+
+        }
+        composable("business_menu_add") {
+
+        }
+        composable("business_menu_view") {
+
+        }
+        composable("settings") {
+
+        }
         composable("user_feed") {
-            UserScreen()
+
+            UserFeedScreen()
         }
 
 
