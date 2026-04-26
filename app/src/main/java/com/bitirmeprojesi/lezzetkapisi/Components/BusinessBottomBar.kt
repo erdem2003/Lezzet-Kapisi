@@ -20,7 +20,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -28,8 +31,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 
-//kadir deneme
-// ─── Renk paleti (Mavi ton) ───────────────────────────────────────────────────
+// ─── Renk paleti ──────────────────────────────────────────────────────────────
 private object NavColors {
     val nav_active        = Color(0xFF1D6FD8)
     val nav_inactive      = Color(0xFF9CA3AF)
@@ -47,7 +49,6 @@ private object NavColors {
     val popup_bg      = Color(0xFFFFFFFF)
     val popup_shadow  = Color(0x22000000)
     val popup_divider = Color(0xFFEEEEEE)
-    val popup_hover   = Color(0xFFEFF6FF)
 }
 
 data class BottomNavItem(
@@ -57,9 +58,54 @@ data class BottomNavItem(
     val iconSelected: ImageVector = icon
 )
 
+// ─── Adaptif boyut yardımcıları ───────────────────────────────────────────────
+//
+// DÜZELTME:
+//   Eski kod: Row'a .navigationBarsPadding() + .heightIn(min=X, max=X)
+//
+//   navigationBarsPadding() → Row'un PADDING'ini artırır (gesture=~0dp, 3-buton=~48dp)
+//   heightIn()              → Sadece Row'un min/max yüksekliğini sınırlar
+//
+//   Sonuç: Surface görsel yüksekliği = contentH + navBarPadding
+//   → Gesture navigation: 64dp  ✓
+//   → 3-buton navigation: 64+48=112dp  ✗ (altta büyük boşluk)
+//
+//   Çözüm: navigationBarsPadding()'i Surface'e taşı.
+//   Surface sistem alanını kendi padding'i olarak alır → arka plan rengi
+//   sistem bar alanını kaplar ama Row içeriği asla şişmez.
+//
+private fun adaptDp(ref: Float, actual: Float, min: Float, max: Float, refScreen: Float = 800f): Dp =
+    ((ref / refScreen) * actual).coerceIn(min, max).dp
+
+private fun adaptSp(ref: Float, actual: Float, min: Float, max: Float, refScreen: Float = 800f): TextUnit =
+    ((ref / refScreen) * actual).coerceIn(min, max).sp
+
 // ─── Ana composable ───────────────────────────────────────────────────────────
 @Composable
 fun BusinessBottomBar(navController: NavController) {
+
+    val config  = LocalConfiguration.current
+    val screenH = config.screenHeightDp.toFloat()
+    val screenW = config.screenWidthDp.toFloat()
+
+    val contentH    = adaptDp(64f,  screenH, 52f, 72f)
+    val iconSize    = adaptDp(22f,  screenH, 18f, 26f)
+    val aiBtnSize   = adaptDp(44f,  screenH, 36f, 52f)
+    val aiRadius    = adaptDp(16f,  screenH, 12f, 20f)
+    val itemRadius  = adaptDp(12f,  screenH,  9f, 16f)
+    val itemHPad    = adaptDp(12f,  screenH,  8f, 16f)
+    val itemVPad    = adaptDp( 6f,  screenH,  4f,  9f)
+    val gap         = adaptDp( 3f,  screenH,  2f,  5f)
+    val barHPad     = adaptDp( 4f,  screenH,  2f,  8f)
+    val labelSp     = adaptSp(10f,  screenH,  8f, 12f)
+    val popupOffset = contentH + 12.dp
+
+    val popupW    = adaptDp(170f, screenW, 140f, 210f)
+    val popupHPad = adaptDp( 16f, screenH,  12f,  20f)
+    val popupVPad = adaptDp( 14f, screenH,  10f,  18f)
+    val popupIcon = adaptDp( 20f, screenH,  15f,  24f)
+    val popupGap  = adaptDp( 12f, screenH,   8f,  16f)
+    val popupLbl  = adaptSp( 14f, screenH,  11f,  16f)
 
     val items = listOf(
         BottomNavItem("business_feed", "Home",     Icons.Outlined.Home,     Icons.Filled.Home),
@@ -69,19 +115,20 @@ fun BusinessBottomBar(navController: NavController) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
     var menuPopupVisible by remember { mutableStateOf(false) }
-
     val isMenuSelected = currentRoute == "business_menu_add" || currentRoute == "business_menu_view"
 
-    // ── Tüm wrapper: popup + navbar birlikte, ama navbar sabit yükseklikte ────
     Box(modifier = Modifier.fillMaxWidth()) {
 
-        // ── Navbar — her zaman sabit, popup tarafından itilmez ────────────────
+        // ── Navbar ────────────────────────────────────────────────────────────
+        // FIX: navigationBarsPadding() Surface'e taşındı.
+        // Surface artık sistem bar alanının arka planını beyaz boyar (3-buton bar
+        // arkasındaki şeffaf/siyah boşluk gider) ve Row içeriği sabit kalır.
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter),
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding(),  // ← BURAYA TAŞINDI (eskiden Row'daydı)
             color = NavColors.nav_surface,
             shadowElevation = 0.dp
         ) {
@@ -90,79 +137,46 @@ fun BusinessBottomBar(navController: NavController) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .height(66.dp)
-                        .padding(horizontal = 4.dp),
+                        // navigationBarsPadding() KALDIRILDI → Row artık asla şişmez
+                        .height(contentH)               // heightIn yerine sabit height yeterli
+                        .padding(horizontal = barHPad),
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    NavBarItem(
-                        item = items[0],
-                        isSelected = currentRoute == items[0].route,
-                        onClick = {
-                            menuPopupVisible = false
-                            navController.navigateSingleTop(items[0].route)
-                        }
-                    )
-
-                    NavBarItem(
-                        item = items[1],
-                        isSelected = currentRoute == items[1].route,
-                        onClick = {
-                            menuPopupVisible = false
-                            navController.navigateSingleTop(items[1].route)
-                        }
-                    )
-
-                    AiChatButton(
-                        isSelected = currentRoute == "chatbot",
-                        onClick = {
-                            menuPopupVisible = false
-                            navController.navigateSingleTop("chatbot")
-                        }
-                    )
-
-                    MenuNavItem(
-                        isSelected = isMenuSelected,
-                        isPopupOpen = menuPopupVisible,
-                        onClick = { menuPopupVisible = !menuPopupVisible }
-                    )
-
-                    NavBarItem(
-                        item = items[2],
-                        isSelected = currentRoute == items[2].route,
-                        onClick = {
-                            menuPopupVisible = false
-                            navController.navigateSingleTop(items[2].route)
-                        }
-                    )
+                    NavBarItem(items[0], currentRoute == items[0].route, iconSize, itemRadius, itemHPad, itemVPad, gap, labelSp) {
+                        menuPopupVisible = false; navController.navigateSingleTop(items[0].route)
+                    }
+                    NavBarItem(items[1], currentRoute == items[1].route, iconSize, itemRadius, itemHPad, itemVPad, gap, labelSp) {
+                        menuPopupVisible = false; navController.navigateSingleTop(items[1].route)
+                    }
+                    AiChatButton(currentRoute == "chatbot", aiBtnSize, aiRadius, iconSize, gap, labelSp) {
+                        menuPopupVisible = false; navController.navigateSingleTop("chatbot")
+                    }
+                    MenuNavItem(isMenuSelected, menuPopupVisible, iconSize, itemRadius, itemHPad, itemVPad, gap, labelSp) {
+                        menuPopupVisible = !menuPopupVisible
+                    }
+                    NavBarItem(items[2], currentRoute == items[2].route, iconSize, itemRadius, itemHPad, itemVPad, gap, labelSp) {
+                        menuPopupVisible = false; navController.navigateSingleTop(items[2].route)
+                    }
                 }
             }
         }
 
-        // ── Popup — navbar'ın ÜSTÜNDE, onun yüksekliğini etkilemeden ──────────
-        // wrapContentSize ile kendi boyutunu alıyor, offset ile navbar'ın üstüne konuyor
+        // ── Popup ─────────────────────────────────────────────────────────────
         AnimatedVisibility(
             visible = menuPopupVisible,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                // navigationBarsPadding + navbar yüksekliği (66dp) + divider (1dp) + gap (8dp)
                 .navigationBarsPadding()
-                .padding(bottom = (66 + 1 + 8).dp)
+                .padding(bottom = popupOffset)
                 .zIndex(10f),
             enter = fadeIn(tween(150)) + slideInVertically(tween(150)) { it / 2 },
             exit  = fadeOut(tween(100)) + slideOutVertically(tween(100)) { it / 2 }
         ) {
-            MenuPopup(
-                onAddClick = {
-                    menuPopupVisible = false
-                    navController.navigateSingleTop("business_menu_add")
-                },
-                onViewClick = {
-                    menuPopupVisible = false
-                    navController.navigateSingleTop("business_menu_view")
-                },
-                onDismiss = { menuPopupVisible = false }
+            MenuPopup(popupW, popupHPad, popupVPad, popupIcon, popupLbl, popupGap,
+                onAddClick  = { menuPopupVisible = false; navController.navigateSingleTop("business_menu_add") },
+                onViewClick = { menuPopupVisible = false; navController.navigateSingleTop("business_menu_view") },
+                onDismiss   = { menuPopupVisible = false }
             )
         }
     }
@@ -171,106 +185,65 @@ fun BusinessBottomBar(navController: NavController) {
 // ─── Standart nav item ────────────────────────────────────────────────────────
 @Composable
 private fun NavBarItem(
-    item: BottomNavItem,
-    isSelected: Boolean,
-    onClick: () -> Unit
+    item: BottomNavItem, isSelected: Boolean,
+    iconSize: Dp, itemRadius: Dp, itemHPad: Dp, itemVPad: Dp,
+    gap: Dp, labelSp: TextUnit, onClick: () -> Unit
 ) {
     val contentColor by animateColorAsState(
-        targetValue = if (isSelected) NavColors.nav_active else NavColors.nav_inactive,
-        animationSpec = tween(durationMillis = 250),
-        label = "navItemColor"
-    )
+        if (isSelected) NavColors.nav_active else NavColors.nav_inactive, tween(250), label = "c")
     val bgColor by animateColorAsState(
-        targetValue = if (isSelected) NavColors.nav_indicator else Color.Transparent,
-        animationSpec = tween(durationMillis = 250),
-        label = "navItemBg"
-    )
+        if (isSelected) NavColors.nav_indicator else Color.Transparent, tween(250), label = "bg")
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.08f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "navItemScale"
-    )
+        if (isSelected) 1.07f else 1f, spring(Spring.DampingRatioMediumBouncy), label = "s")
 
     Column(
         modifier = Modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(itemRadius))
             .background(bgColor)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .clickable(remember { MutableInteractionSource() }, null, onClick = onClick)
+            .padding(horizontal = itemHPad, vertical = itemVPad),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(gap)
     ) {
-        Icon(
-            imageVector = if (isSelected) item.iconSelected else item.icon,
-            contentDescription = item.label,
-            tint = contentColor,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            text = item.label,
-            fontSize = 10.sp,
+        Icon(if (isSelected) item.iconSelected else item.icon, item.label,
+            tint = contentColor, modifier = Modifier.size(iconSize))
+        Text(item.label, fontSize = labelSp,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-            color = contentColor
-        )
+            color = contentColor)
     }
 }
 
 // ─── Menu nav item ────────────────────────────────────────────────────────────
 @Composable
 private fun MenuNavItem(
-    isSelected: Boolean,
-    isPopupOpen: Boolean,
-    onClick: () -> Unit
+    isSelected: Boolean, isPopupOpen: Boolean,
+    iconSize: Dp, itemRadius: Dp, itemHPad: Dp, itemVPad: Dp,
+    gap: Dp, labelSp: TextUnit, onClick: () -> Unit
 ) {
     val isActive = isSelected || isPopupOpen
-
     val contentColor by animateColorAsState(
-        targetValue = if (isActive) NavColors.nav_active else NavColors.nav_inactive,
-        animationSpec = tween(250),
-        label = "menuColor"
-    )
+        if (isActive) NavColors.nav_active else NavColors.nav_inactive, tween(250), label = "c")
     val bgColor by animateColorAsState(
-        targetValue = if (isActive) NavColors.nav_indicator else Color.Transparent,
-        animationSpec = tween(250),
-        label = "menuBg"
-    )
+        if (isActive) NavColors.nav_indicator else Color.Transparent, tween(250), label = "bg")
     val scale by animateFloatAsState(
-        targetValue = if (isActive) 1.08f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "menuScale"
-    )
+        if (isActive) 1.07f else 1f, spring(Spring.DampingRatioMediumBouncy), label = "s")
 
     Column(
         modifier = Modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(itemRadius))
             .background(bgColor)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .clickable(remember { MutableInteractionSource() }, null, onClick = onClick)
+            .padding(horizontal = itemHPad, vertical = itemVPad),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(gap)
     ) {
-        Icon(
-            imageVector = if (isActive) Icons.Filled.MenuBook else Icons.Outlined.MenuBook,
-            contentDescription = "Menu",
-            tint = contentColor,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            text = "Menu",
-            fontSize = 10.sp,
+        Icon(if (isActive) Icons.Filled.MenuBook else Icons.Outlined.MenuBook, "Menu",
+            tint = contentColor, modifier = Modifier.size(iconSize))
+        Text("Menu", fontSize = labelSp,
             fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium,
-            color = contentColor
-        )
+            color = contentColor)
     }
 }
 
@@ -278,130 +251,82 @@ private fun MenuNavItem(
 @Composable
 private fun AiChatButton(
     isSelected: Boolean,
+    aiBtnSize: Dp, aiRadius: Dp, iconSize: Dp, gap: Dp, labelSp: TextUnit,
     onClick: () -> Unit
 ) {
-    val gradient = if (isSelected)
-        Brush.linearGradient(listOf(NavColors.nav_ai_start_pressed, NavColors.nav_ai_end_pressed))
-    else
-        Brush.linearGradient(listOf(NavColors.nav_ai_start, NavColors.nav_ai_end))
-
+    val gradient = Brush.linearGradient(
+        if (isSelected) listOf(NavColors.nav_ai_start_pressed, NavColors.nav_ai_end_pressed)
+        else            listOf(NavColors.nav_ai_start,         NavColors.nav_ai_end)
+    )
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.08f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "aiScale"
-    )
-
+        if (isSelected) 1.07f else 1f, spring(Spring.DampingRatioMediumBouncy), label = "ai")
     val labelColor by animateColorAsState(
-        targetValue = if (isSelected) NavColors.nav_ai_label_active else NavColors.nav_inactive,
-        animationSpec = tween(250),
-        label = "aiLabelColor"
-    )
+        if (isSelected) NavColors.nav_ai_label_active else NavColors.nav_inactive, tween(250), label = "lc")
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+        verticalArrangement = Arrangement.spacedBy(gap),
         modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
     ) {
         Box(
             modifier = Modifier
-                .size(50.dp)
-                .shadow(
-                    elevation = if (isSelected) 6.dp else 10.dp,
-                    shape = RoundedCornerShape(18.dp),
-                    ambientColor = NavColors.nav_ai_shadow,
-                    spotColor = NavColors.nav_ai_shadow
-                )
-                .clip(RoundedCornerShape(18.dp))
-                .background(brush = gradient)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClick
-                ),
+                .size(aiBtnSize)
+                .shadow(if (isSelected) 6.dp else 10.dp, RoundedCornerShape(aiRadius),
+                    ambientColor = NavColors.nav_ai_shadow, spotColor = NavColors.nav_ai_shadow)
+                .clip(RoundedCornerShape(aiRadius))
+                .background(gradient)
+                .clickable(remember { MutableInteractionSource() }, null, onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = if (isSelected) Icons.Filled.SmartToy else Icons.Outlined.SmartToy,
-                contentDescription = "AI Chat",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
+            Icon(if (isSelected) Icons.Filled.SmartToy else Icons.Outlined.SmartToy,
+                "AI Chat", tint = Color.White, modifier = Modifier.size(iconSize))
         }
-        Text(
-            text = "AI",
-            fontSize = 10.sp,
+        Text("AI", fontSize = labelSp,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-            color = labelColor
-        )
+            color = labelColor)
     }
 }
 
 // ─── Menu popup ───────────────────────────────────────────────────────────────
 @Composable
 private fun MenuPopup(
-    onAddClick: () -> Unit,
-    onViewClick: () -> Unit,
-    onDismiss: () -> Unit
+    popupW: Dp, popupHPad: Dp, popupVPad: Dp,
+    popupIcon: Dp, popupLbl: TextUnit, popupGap: Dp,
+    onAddClick: () -> Unit, onViewClick: () -> Unit, onDismiss: () -> Unit
 ) {
     Surface(
         modifier = Modifier
-            .width(160.dp)
-            .shadow(
-                elevation = 12.dp,
-                shape = RoundedCornerShape(16.dp),
-                ambientColor = NavColors.popup_shadow,
-                spotColor = NavColors.popup_shadow
-            ),
+            .width(popupW)
+            .shadow(12.dp, RoundedCornerShape(16.dp),
+                ambientColor = NavColors.popup_shadow, spotColor = NavColors.popup_shadow),
         shape = RoundedCornerShape(16.dp),
         color = NavColors.popup_bg,
         tonalElevation = 0.dp
     ) {
         Column {
-            PopupMenuItem(
-                icon = Icons.Outlined.AddBox,
-                label = "Menu Add",
-                onClick = onAddClick
-            )
+            PopupMenuItem(Icons.Outlined.AddBox,   "Menu Add",  popupIcon, popupHPad, popupVPad, popupLbl, popupGap, onAddClick)
             HorizontalDivider(thickness = 0.5.dp, color = NavColors.popup_divider)
-            PopupMenuItem(
-                icon = Icons.Outlined.MenuBook,
-                label = "Menu View",
-                onClick = onViewClick
-            )
+            PopupMenuItem(Icons.Outlined.MenuBook, "Menu View", popupIcon, popupHPad, popupVPad, popupLbl, popupGap, onViewClick)
         }
     }
 }
 
 @Composable
 private fun PopupMenuItem(
-    icon: ImageVector,
-    label: String,
+    icon: ImageVector, label: String,
+    iconSize: Dp, hPad: Dp, vPad: Dp, labelSp: TextUnit, gap: Dp,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .clickable(remember { MutableInteractionSource() }, null, onClick = onClick)
+            .padding(horizontal = hPad, vertical = vPad),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(gap)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = NavColors.nav_active,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = NavColors.nav_active
-        )
+        Icon(icon, label, tint = NavColors.nav_active, modifier = Modifier.size(iconSize))
+        Text(label, fontSize = labelSp, fontWeight = FontWeight.Medium, color = NavColors.nav_active)
     }
 }
 
