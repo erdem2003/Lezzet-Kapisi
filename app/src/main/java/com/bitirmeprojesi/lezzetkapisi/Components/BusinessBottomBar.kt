@@ -59,21 +59,7 @@ data class BottomNavItem(
 )
 
 // ─── Adaptif boyut yardımcıları ───────────────────────────────────────────────
-//
-// DÜZELTME:
-//   Eski kod: Row'a .navigationBarsPadding() + .heightIn(min=X, max=X)
-//
-//   navigationBarsPadding() → Row'un PADDING'ini artırır (gesture=~0dp, 3-buton=~48dp)
-//   heightIn()              → Sadece Row'un min/max yüksekliğini sınırlar
-//
-//   Sonuç: Surface görsel yüksekliği = contentH + navBarPadding
-//   → Gesture navigation: 64dp  ✓
-//   → 3-buton navigation: 64+48=112dp  ✗ (altta büyük boşluk)
-//
-//   Çözüm: navigationBarsPadding()'i Surface'e taşı.
-//   Surface sistem alanını kendi padding'i olarak alır → arka plan rengi
-//   sistem bar alanını kaplar ama Row içeriği asla şişmez.
-//
+
 private fun adaptDp(ref: Float, actual: Float, min: Float, max: Float, refScreen: Float = 800f): Dp =
     ((ref / refScreen) * actual).coerceIn(min, max).dp
 
@@ -119,11 +105,6 @@ fun BusinessBottomBar(navController: NavController) {
     val isMenuSelected = currentRoute == "business_menu_add" || currentRoute == "business_menu_view"
 
     Box(modifier = Modifier.fillMaxWidth()) {
-
-        // ── Navbar ────────────────────────────────────────────────────────────
-        // FIX: navigationBarsPadding() Surface'e taşındı.
-        // Surface artık sistem bar alanının arka planını beyaz boyar (3-buton bar
-        // arkasındaki şeffaf/siyah boşluk gider) ve Row içeriği sabit kalır.
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
