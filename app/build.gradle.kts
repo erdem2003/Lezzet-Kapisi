@@ -87,4 +87,8 @@ dependencies {
     //önyüzde ikonlar için
     implementation("androidx.compose.material:material-icons-extended")
 
+
+    //api istekleri için
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 }

@@ -18,6 +18,8 @@ fun BusinessFeedScreen(navController: NavHostController) {
         }
     ) { padding ->
 
+        //Kodu yazacağımız yer
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
