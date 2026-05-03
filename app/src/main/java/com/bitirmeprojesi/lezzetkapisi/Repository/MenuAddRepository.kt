@@ -47,10 +47,15 @@ class MenuAddRepository {
             return
         }
 
+        val menuRef = db.collection("Business_Menu").document()
+        val documentId = menuRef.id  // ← artık ID'yi biliyoruz
+
         val storageRef=storage.reference
             .child("menu_photos")
             .child(auth.currentUser!!.uid)
-            .child("${System.currentTimeMillis()}.jpg")
+            .child("$documentId.jpg")
+
+
 
         storageRef.putFile(foodPhoto)
             .addOnSuccessListener {
@@ -68,8 +73,8 @@ class MenuAddRepository {
 
                     )
 
-                    db.collection("Business_Menu")
-                        .add(menuData)
+                        menuRef
+                        .set(menuData)
                         .addOnSuccessListener {
                             onSucces()
 

@@ -1,4 +1,11 @@
 package com.bitirmeprojesi.lezzetkapisi.ViewModels
 
-class BusinessMenuViewModel {
+import androidx.lifecycle.ViewModel
+
+class BusinessMenuViewModel : ViewModel() {
+
+
+
+
+
 }
