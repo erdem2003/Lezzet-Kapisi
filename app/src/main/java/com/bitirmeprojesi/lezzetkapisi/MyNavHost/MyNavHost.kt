@@ -7,10 +7,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessFeedScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessMenuAddScreen
+import com.bitirmeprojesi.lezzetkapisi.Screens.MenuViewScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.RegisterScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.StartScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.UserFeedScreen
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.MenuAddViewModel
+import com.bitirmeprojesi.lezzetkapisi.ViewModels.MenuViewViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.RegisterViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.StartViewModel
 import com.erdemkilic.bitirme_projesi.Screens.LoginScreen
@@ -53,7 +55,8 @@ fun MyNavHost(navController: NavHostController){
             BusinessMenuAddScreen(navController,menuAddViewModel)
         }
         composable("business_menu_view") {
-
+            val menuViewViewModel: MenuViewViewModel=viewModel()
+            MenuViewScreen(navController,menuViewViewModel)
         }
         composable("settings") {
 

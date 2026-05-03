@@ -25,6 +25,7 @@ class MenuAddViewModel : ViewModel() {
     val errorMessage = mutableStateOf<String?>(null)
     val succesMessage = mutableStateOf<String?>(null)
 
+
     val enabledMenuAddButton = mutableStateOf<Boolean?>(false)
 
     fun detectCategoryfromFood(context: Context) { // Her yeni resim seçtiginde bu çalışacak
