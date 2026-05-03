@@ -73,16 +73,19 @@ class MenuViewRepository {
             .child("${auth.uid}")
             .child("$menuId.jpg")
 
-        storageRef.delete().addOnSuccessListener{
-            db.collection("Business_Menu").document(menuId).delete().addOnSuccessListener {
-                onSucces()
+        db.collection("Business_Menu").document(menuId).delete().addOnSuccessListener {
+            onSucces()
+            storageRef.delete().addOnSuccessListener{
 
             }.addOnFailureListener {
                 onError("Silme sırasında bir hata oluştu lütfen tekrar deneyiniz.")
             }
+
+
         }.addOnFailureListener {
             onError("Silme sırasında bir hata oluştu lütfen tekrar deneyiniz.")
         }
+
 
 
 
