@@ -73,7 +73,7 @@ class MenuViewRepository {
             .child("${auth.uid}")
             .child("$menuId.jpg")
 
-        storageRef.delete().addOnFailureListener {
+        storageRef.delete().addOnSuccessListener{
             db.collection("Business_Menu").document(menuId).delete().addOnSuccessListener {
                 onSucces()
 
