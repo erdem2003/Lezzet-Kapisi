@@ -67,28 +67,46 @@ class MenuViewRepository {
         return categoryList
     }
 
-    fun deleteMenu(menuId: String,onError:(String)-> Unit,onSucces:()-> Unit){ // ikisinden birisinin çalışmadıgı duruma daha sonra gel bak.Burada sorun oluşabilir
-        val storageRef=storage.reference
+    fun deleteMenu(menuId: String, onError: (String) -> Unit, onSucces: () -> Unit) {
+
+        val storageRef = storage.reference
             .child("menu_photos")
             .child("${auth.uid}")
             .child("$menuId.jpg")
 
-        db.collection("Business_Menu").document(menuId).delete().addOnSuccessListener {
-            onSucces()
-            storageRef.delete().addOnSuccessListener{
-
-            }.addOnFailureListener {
-                onError("Silme sırasında bir hata oluştu lütfen tekrar deneyiniz.")
+        storageRef.delete()
+            .addOnSuccessListener {
+                // Storage silindi -> Firestore'u sil
+                deleteFromFirestore(menuId, onError, onSucces)
             }
+            .addOnFailureListener { e ->
+                val storageException = e as? com.google.firebase.storage.StorageException
+                val errorCode = storageException?.errorCode
 
+                if (errorCode == com.google.firebase.storage.StorageException.ERROR_OBJECT_NOT_FOUND) {
+                    // Dosya storage'da zaten yok (önceki yarım kalan silme)
+                    // Firestore'daki kaydı temizlemeye devam et
+                    deleteFromFirestore(menuId, onError, onSucces)
+                } else {
+                    // Gerçek bir storage hatası
+                    onError("Fotoğraf silinemedi, lütfen tekrar deneyiniz.")
+                }
+            }
+    }
 
-        }.addOnFailureListener {
-            onError("Silme sırasında bir hata oluştu lütfen tekrar deneyiniz.")
-        }
-
-
-
-
+    private fun deleteFromFirestore(menuId: String, onError: (String) -> Unit, onSucces: () -> Unit) {
+        db.collection("Business_Menu")
+            .document(menuId)
+            .delete()
+            .addOnSuccessListener {
+                onSucces()
+            }
+            .addOnFailureListener {
+                // Storage silindi ama Firestore silinemedi
+                // Kullanıcı tekrar denediğinde storage object-not-found alacak
+                // ama artık onu handle ediyoruz, sorun yok
+                onError("Menü kaydı silinemedi, lütfen tekrar deneyiniz.")
+            }
     }
 
 
