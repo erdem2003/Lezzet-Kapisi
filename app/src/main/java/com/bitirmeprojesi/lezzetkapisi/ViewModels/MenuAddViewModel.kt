@@ -23,14 +23,17 @@ class MenuAddViewModel : ViewModel() {
     val categoryMap = mutableStateMapOf<Int, String>() //Int veritabanına kaydetmek için , Stringi ekrana bastırmak için
 
     val errorMessage = mutableStateOf<String?>(null)
+    val succesMessage = mutableStateOf<String?>(null)
 
     val enabledMenuAddButton = mutableStateOf<Boolean?>(false)
 
-    fun detectCategoryfromFood(context: Context) {
+    fun detectCategoryfromFood(context: Context) { // Her yeni resim seçtiginde bu çalışacak
+        enabledMenuAddButton.value=false
+        categoryMap.clear()
 
         if (photoUri.value == null) {
-            errorMessage.value = "Resim seçmek zorunludur."
             clearState()
+            errorMessage.value = "Resim seçmek zorunludur."
             return
         }
         val uri = photoUri.value
@@ -67,7 +70,7 @@ class MenuAddViewModel : ViewModel() {
 
                         if (body.status == true) {
                             errorMessage.value=null
-                            enabledMenuAddButton.value=true
+
                             // her şey doğru, resimde dogru , cls ' da dönecek zaten
                             categoryMap.clear()
                             body.cls!!.forEach { it->
@@ -79,7 +82,7 @@ class MenuAddViewModel : ViewModel() {
                             categoryMap.values.forEach {key->
                                 Log.d("YOLO","$categoryMap.get(key)")
                             }
-
+                            enabledMenuAddButton.value=true
                         } else {
                             clearState()
                             errorMessage.value = "Girdiginiz resime göre yemek tespit edilemedi.Lütfen tekrar deneyiniz."
@@ -133,6 +136,51 @@ class MenuAddViewModel : ViewModel() {
 
     }
 
+    fun menuAddController(foodname: String, fooddescription: String, foodprice: String) {
+
+        val foodprice_d = foodprice.toDoubleOrNull()
+
+        if (foodname.isBlank()) {
+            errorMessage.value = "Yemek Adı boş bırakılamaz. Lütfen geçerli bir isim giriniz."
+            return
+        }
+        if (fooddescription.isBlank()) {
+            errorMessage.value = "Yemek Açıklaması boş bırakılamaz. Lütfen geçerli bir açıklama giriniz."
+            return
+        }
+        if (foodprice.isBlank()) {
+            errorMessage.value = "Lütfen yemeğin fiyatını giriniz."
+            return
+        }
+        if (foodprice_d == null) {
+            errorMessage.value = "Lütfen rakamsal olarak fiyat giriniz."
+            return
+        }
+        if (foodprice_d <= 0) {
+            errorMessage.value = "Fiyat 0 TL'den yüksek olmalıdır."
+            return
+        }
+        if (photoUri.value == null) {
+            errorMessage.value = "Lütfen bir fotoğraf seçiniz."
+            return
+        }
+
+        // categoryMap'teki key'leri (Int) listeye çevir
+        val categoryIdList = categoryMap.keys.toList()
+
+        repo.menuAdd(
+            food_name        = foodname,
+            food_description = fooddescription,
+            food_price       = foodprice_d,
+            foodPhoto        = photoUri.value!!,
+            categoryIdList   = categoryIdList,
+            onError          = { errorMessage.value = it },
+            onSucces         = {
+                succesMessage.value="Başarıyla eklendi ..."
+                clearState()  // Başarılıysa state'i temizle
+            }
+        )
+    }
 
 
 
