@@ -13,10 +13,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SoupKitchen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +29,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -63,6 +69,17 @@ fun MenuViewScreen(
     val menuList     by viewModel.menuList
     val errorMessage by viewModel.errorMessage
 
+    // Arama state'i
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Arama filtrelemesi: isim küçük harfe çevrilerek karşılaştırılır
+    val filteredMenuList = remember(menuList, searchQuery) {
+        if (searchQuery.isBlank()) menuList
+        else menuList.filter {
+            it.food_name.contains(searchQuery.trim(), ignoreCase = true)
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.menuListController()
     }
@@ -75,21 +92,93 @@ fun MenuViewScreen(
                     .fillMaxWidth()
                     .background(Brush.verticalGradient(colors = listOf(Blue700, Blue600)))
                     .statusBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 20.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
                 Column {
-                    Text(
-                        text = "Menülerim",
-                        color = White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "${menuList.size} ürün listeleniyor",
-                        color = Blue100,
-                        fontSize = 13.sp
-                    )
+                    // ── Başlık satırı ──────────────────────────────────────────
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "Menülerim",
+                                color = White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${filteredMenuList.size} ürün listeleniyor",
+                                color = Blue100,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        // Şef ikonu – tıklanabilir, işlev daha sonra eklenecek
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    // TODO: şef profiline veya ilgili sayfaya yönlendir
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SoupKitchen,
+                                contentDescription = "Şef",
+                                tint = White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // ── Arama barı ─────────────────────────────────────────────
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(36.dp)
+                            .background(White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Ara",
+                            tint = White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                color = White,
+                                fontSize = 13.sp
+                            ),
+                            cursorBrush = SolidColor(White),
+                            decorationBox = { innerTextField ->
+                                Box(contentAlignment = Alignment.CenterStart) {
+                                    if (searchQuery.isEmpty()) {
+                                        Text(
+                                            text = "Yemek adına göre ara…",
+                                            color = White.copy(alpha = 0.5f),
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         },
@@ -149,7 +238,9 @@ fun MenuViewScreen(
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Blue600),
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().height(48.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
                         ) {
                             Text("Tekrar Dene", fontWeight = FontWeight.SemiBold)
                         }
@@ -160,7 +251,7 @@ fun MenuViewScreen(
         }
 
         // ── Boş liste ─────────────────────────────────────────────────────────
-        if (menuList.isEmpty()) {
+        if (filteredMenuList.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -183,14 +274,17 @@ fun MenuViewScreen(
                     }
                     Spacer(Modifier.height(20.dp))
                     Text(
-                        text = "Henüz menü eklenmedi",
+                        text = if (searchQuery.isBlank()) "Henüz menü eklenmedi"
+                        else "\"$searchQuery\" için sonuç bulunamadı",
                         color = TextDark,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Menü eklemek için alt bardaki\nMenu butonuna basabilirsin",
+                        text = if (searchQuery.isBlank())
+                            "Menü eklemek için alt bardaki\nMenu butonuna basabilirsin"
+                        else "Farklı bir isim deneyin",
                         color = TextMuted,
                         fontSize = 13.sp
                     )
@@ -210,7 +304,7 @@ fun MenuViewScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             itemsIndexed(
-                items = menuList,
+                items = filteredMenuList,
                 key = { _, menu -> menu.food_name + menu.createdDate.toString() }
             ) { index, menu ->
                 AnimatedVisibility(
@@ -227,17 +321,17 @@ fun MenuViewScreen(
                         onCardClick = {
                             // TODO: yemek detay sayfasına yönlendir
                             // navController.navigate("menu_detail/${menu.menu_id}")
-                            Log.d("Deneme","Card Click")
+                            Log.d("Deneme", "Card Click")
                         },
                         onEditClick = {
                             // TODO: düzenleme sayfasına yönlendir
                             // navController.navigate("business_menu_edit/${menu.menu_id}")
-                            Log.d("Deneme","Edit Click")
+                            Log.d("Deneme", "Edit Click")
                         },
                         onDeleteClick = {
                             // TODO: silme dialogu göster veya direkt sil
                             // viewModel.deleteMenu(menu)
-                            Log.d("Deneme","Delete Click")
+                            Log.d("Deneme", "Delete Click")
                         }
                     )
                 }
@@ -335,14 +429,23 @@ private fun MenuCard(
                         )
                     }
 
-                    // Oluşturulma tarihi
+                    // Oluşturulma tarihi – takvim ikonu ile
                     if (dateFormatted.isNotEmpty()) {
                         Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "📅 $dateFormatted",
-                            color = TextMuted.copy(alpha = 0.7f),
-                            fontSize = 10.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = "Tarih",
+                                tint = TextMuted.copy(alpha = 0.7f),
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(Modifier.width(3.dp))
+                            Text(
+                                text = dateFormatted,
+                                color = TextMuted.copy(alpha = 0.7f),
+                                fontSize = 10.sp
+                            )
+                        }
                     }
                 }
             }
