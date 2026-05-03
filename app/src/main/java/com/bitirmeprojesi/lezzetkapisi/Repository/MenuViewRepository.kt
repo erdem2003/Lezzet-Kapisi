@@ -7,12 +7,14 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
+import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
 
 class MenuViewRepository {
 
     val db= Firebase.firestore
     val auth= Firebase.auth
+    val storage= Firebase.storage
 
     val repo: MenuAddRepository= MenuAddRepository()
 
@@ -65,14 +67,25 @@ class MenuViewRepository {
         return categoryList
     }
 
-    fun deleteMenu(menuId: String,onError:(String)-> Unit,onSucces:()-> Unit){
+    fun deleteMenu(menuId: String,onError:(String)-> Unit,onSucces:()-> Unit){ // ikisinden birisinin çalışmadıgı duruma daha sonra gel bak.Burada sorun oluşabilir
+        val storageRef=storage.reference
+            .child("menu_photos")
+            .child("${auth.uid}")
+            .child("$menuId.jpg")
 
-        db.collection("Business_Menu").document(menuId).delete().addOnSuccessListener {
-            onSucces()
+        storageRef.delete().addOnFailureListener {
+            db.collection("Business_Menu").document(menuId).delete().addOnSuccessListener {
+                onSucces()
 
+            }.addOnFailureListener {
+                onError("Silme sırasında bir hata oluştu lütfen tekrar deneyiniz.")
+            }
         }.addOnFailureListener {
             onError("Silme sırasında bir hata oluştu lütfen tekrar deneyiniz.")
         }
+
+
+
     }
 
 
