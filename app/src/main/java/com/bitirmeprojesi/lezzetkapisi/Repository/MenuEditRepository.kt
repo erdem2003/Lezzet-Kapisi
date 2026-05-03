@@ -36,17 +36,17 @@ class MenuEditRepository {
 
     fun editMenu(menu_id:String,food_name:String,food_description:String,food_price: String,onError: (String) -> Unit,onSuccess: () -> Unit){
         val food_price_d=food_price.toDoubleOrNull()
-        if (food_name!="" || food_description!="" || food_price!=null){
+        if (food_name=="" || food_description=="" || food_price_d==null){
             onError("Bütün alanları doldurmanız gereklidir")
             return
         }
         val update_menu=hashMapOf<String,Any>(
             "food_name" to food_name,
             "food_description" to food_description,
-            "food_price" to food_price_d!!
+            "food_price" to food_price_d
         )
 
-        db.collection("Business_Menu").document(menu_id).set(update_menu).addOnSuccessListener {
+        db.collection("Business_Menu").document(menu_id).update(update_menu).addOnSuccessListener {
             onSuccess()
         }.addOnFailureListener {
             onError("Güncelleme yapılamadı bir hata oluştu.Lütfen tekrar deneyiniz.")

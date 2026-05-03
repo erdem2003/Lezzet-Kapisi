@@ -21,6 +21,7 @@ class MenuEditViewModel: ViewModel() {
         repo.getMenu(menu_id,
             onError = { error_it->
                 error_message.value=error_it
+                isLoading.value=false
             },
             onSuccess = { it->
                 menu.value=it
@@ -33,6 +34,7 @@ class MenuEditViewModel: ViewModel() {
         repo.editMenu(menu_id = menu_id,food_name,food_description,food_price,
             onError = { error_it->
                 error_message.value=error_it
+                isLoading.value=false
             },
             onSuccess = {
                 success_message.value="Degisiklikler başarıyla kaydedildi"

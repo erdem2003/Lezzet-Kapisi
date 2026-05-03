@@ -1,6 +1,5 @@
 package com.bitirmeprojesi.lezzetkapisi.Screens
 
-import android.R
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -13,12 +12,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SoupKitchen
@@ -70,10 +71,8 @@ fun MenuViewScreen(
     val menuList     by viewModel.menuList
     val errorMessage by viewModel.errorMessage
 
-    // Arama state'i
     var searchQuery by remember { mutableStateOf("") }
 
-    // Arama filtrelemesi: isim küçük harfe çevrilerek karşılaştırılır
     val filteredMenuList = remember(menuList, searchQuery) {
         if (searchQuery.isBlank()) menuList
         else menuList.filter {
@@ -96,52 +95,48 @@ fun MenuViewScreen(
                     .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
                 Column {
-                    // ── Başlık satırı ──────────────────────────────────────────
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier              = Modifier.fillMaxWidth(),
+                        verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
                             Text(
-                                text = "Menülerim",
-                                color = White,
-                                fontSize = 20.sp,
+                                text       = "Menülerim",
+                                color      = White,
+                                fontSize   = 20.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "${filteredMenuList.size} ürün listeleniyor",
-                                color = Blue100,
+                                text     = "${filteredMenuList.size} ürün listeleniyor",
+                                color    = Blue100,
                                 fontSize = 11.sp
                             )
                         }
 
-                        // Şef ikonu – tıklanabilir, işlev daha sonra eklenecek
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
                                 .background(White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
+                                    indication        = null
                                 ) {
-                                    // TODO: şef profiline veya ilgili sayfaya yönlendir
-                                    Log.d("Deneme","Logo basıldı")
+                                    Log.d("Deneme", "Logo basıldı")
                                 },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.SoupKitchen,
+                                imageVector        = Icons.Default.SoupKitchen,
                                 contentDescription = "Şef",
-                                tint = White,
-                                modifier = Modifier.size(22.dp)
+                                tint               = White,
+                                modifier           = Modifier.size(22.dp)
                             )
                         }
                     }
 
                     Spacer(Modifier.height(8.dp))
 
-                    // ── Arama barı ─────────────────────────────────────────────
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -151,27 +146,24 @@ fun MenuViewScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Search,
+                            imageVector        = Icons.Default.Search,
                             contentDescription = "Ara",
-                            tint = White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(16.dp)
+                            tint               = White.copy(alpha = 0.7f),
+                            modifier           = Modifier.size(16.dp)
                         )
                         Spacer(Modifier.width(6.dp))
                         BasicTextField(
-                            value = searchQuery,
+                            value         = searchQuery,
                             onValueChange = { searchQuery = it },
-                            singleLine = true,
-                            textStyle = TextStyle(
-                                color = White,
-                                fontSize = 13.sp
-                            ),
-                            cursorBrush = SolidColor(White),
+                            singleLine    = true,
+                            textStyle     = TextStyle(color = White, fontSize = 13.sp),
+                            cursorBrush   = SolidColor(White),
                             decorationBox = { innerTextField ->
                                 Box(contentAlignment = Alignment.CenterStart) {
                                     if (searchQuery.isEmpty()) {
                                         Text(
-                                            text = "Yemek adına göre ara…",
-                                            color = White.copy(alpha = 0.5f),
+                                            text     = "Yemek adına göre ara…",
+                                            color    = White.copy(alpha = 0.5f),
                                             fontSize = 13.sp
                                         )
                                     }
@@ -190,15 +182,13 @@ fun MenuViewScreen(
         // ── Loading ───────────────────────────────────────────────────────────
         if (viewModel.isLoading.value == true) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier         = Modifier.fillMaxSize().padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = Blue600,
+                    color       = Blue600,
                     strokeWidth = 3.dp,
-                    modifier = Modifier.size(48.dp)
+                    modifier    = Modifier.size(48.dp)
                 )
             }
             return@Scaffold
@@ -207,42 +197,28 @@ fun MenuViewScreen(
         // ── Hata mesajı ───────────────────────────────────────────────────────
         if (errorMessage.isNotEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier         = Modifier.fillMaxSize().padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = White),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier  = Modifier.fillMaxWidth().padding(24.dp),
+                    colors    = CardDefaults.cardColors(containerColor = White),
+                    shape     = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier            = Modifier.padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("⚠️", fontSize = 40.sp)
                         Spacer(Modifier.height(12.dp))
-                        Text(
-                            text = errorMessage,
-                            color = ErrorText,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text(text = errorMessage, color = ErrorText, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(16.dp))
                         Button(
-                            onClick = {
-                                viewModel.clearState()
-                                viewModel.menuListController()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Blue600),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
+                            onClick = { viewModel.clearState(); viewModel.menuListController() },
+                            colors  = ButtonDefaults.buttonColors(containerColor = Blue600),
+                            shape   = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().height(48.dp)
                         ) {
                             Text("Tekrar Dene", fontWeight = FontWeight.SemiBold)
                         }
@@ -255,36 +231,32 @@ fun MenuViewScreen(
         // ── Boş liste ─────────────────────────────────────────────────────────
         if (filteredMenuList.isEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier         = Modifier.fillMaxSize().padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .background(Blue50, RoundedCornerShape(24.dp)),
+                        modifier         = Modifier.size(96.dp).background(Blue50, RoundedCornerShape(24.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Restaurant,
+                            imageVector        = Icons.Default.Restaurant,
                             contentDescription = null,
-                            tint = Blue600,
-                            modifier = Modifier.size(48.dp)
+                            tint               = Blue600,
+                            modifier           = Modifier.size(48.dp)
                         )
                     }
                     Spacer(Modifier.height(20.dp))
                     Text(
-                        text = if (searchQuery.isBlank()) "Henüz menü eklenmedi"
+                        text       = if (searchQuery.isBlank()) "Henüz menü eklenmedi"
                         else "\"$searchQuery\" için sonuç bulunamadı",
-                        color = TextDark,
-                        fontSize = 17.sp,
+                        color      = TextDark,
+                        fontSize   = 17.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = if (searchQuery.isBlank())
+                        text  = if (searchQuery.isBlank())
                             "Menü eklemek için alt bardaki\nMenu butonuna basabilirsin"
                         else "Farklı bir isim deneyin",
                         color = TextMuted,
@@ -297,43 +269,39 @@ fun MenuViewScreen(
 
         // ── Liste ─────────────────────────────────────────────────────────────
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp
-            ),
+            modifier       = Modifier.fillMaxSize().padding(paddingValues),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             itemsIndexed(
                 items = filteredMenuList,
-                key = { _, menu -> menu.food_name + menu.createdDate.toString() }
+                key   = { _, menu -> menu.food_name + menu.createdDate.toString() }
             ) { index, menu ->
                 AnimatedVisibility(
                     visible = true,
-                    enter = fadeIn(tween(300, delayMillis = index * 60)) +
-                            slideInVertically(
-                                tween(300, delayMillis = index * 60),
-                                initialOffsetY = { it / 3 }
-                            )
+                    enter   = fadeIn(tween(300, delayMillis = index * 60)) +
+                            slideInVertically(tween(300, delayMillis = index * 60)) { it / 3 }
                 ) {
                     MenuCard(
-                        menu = menu,
+                        menu          = menu,
                         categoryNames = viewModel.menuid_foodCategory[menu.menu_id] ?: emptyList(),
-                        onCardClick = {
+                        onCardClick   = {
                             // TODO: yemek detay sayfasına yönlendir
                             // navController.navigate("menu_detail/${menu.menu_id}")
                             Log.d("Deneme", "Card Click")
                         },
-                        onEditClick = {
-                            // TODO: düzenleme sayfasına yönlendir
-                            // navController.navigate("business_menu_edit/${menu.menu_id}")
+                        onEditClick   = {
+                            navController.navigate("business_menu_edit/${menu.menu_id}")
                             Log.d("Deneme", "Edit Click")
                         },
                         onDeleteClick = {
-                            // TODO: silme dialogu göster veya direkt sil
                             viewModel.menuDeleteController(menu.menu_id)
                             Log.d("Deneme", "Delete Click")
+                        },
+                        onInfoClick   = {
+                            // TODO: yemek bilgi/detay sayfasına yönlendir
+                            // navController.navigate("menu_info/${menu.menu_id}")
+                            Log.d("Deneme", "Info Click - menu_id: ${menu.menu_id}")
                         }
                     )
                 }
@@ -350,7 +318,8 @@ private fun MenuCard(
     categoryNames: List<String>,
     onCardClick: () -> Unit,
     onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onInfoClick: () -> Unit
 ) {
     val dateFormatted = remember(menu.createdDate) {
         try {
@@ -364,27 +333,24 @@ private fun MenuCard(
             .shadow(4.dp, RoundedCornerShape(16.dp), ambientColor = CardShadow, spotColor = CardShadow)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onCardClick
+                indication        = null,
+                onClick           = onCardClick
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape  = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = White)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
 
             // ── Üst alan: fotoğraf + içerik ───────────────────────────────────
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
+                modifier          = Modifier.fillMaxWidth().padding(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                // Fotoğraf
                 AsyncImage(
-                    model = menu.food_photo_url,
+                    model              = menu.food_photo_url,
                     contentDescription = menu.food_name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
+                    contentScale       = ContentScale.Crop,
+                    modifier           = Modifier
                         .size(88.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(Blue50)
@@ -394,57 +360,89 @@ private fun MenuCard(
                 Spacer(Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = menu.food_name,
-                        color = TextDark,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    // ── Başlık satırı: isim + info butonu ─────────────────────
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text      = menu.food_name,
+                            color     = TextDark,
+                            fontSize  = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines  = 1,
+                            overflow  = TextOverflow.Ellipsis,
+                            modifier  = Modifier.weight(1f)
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        // ── Bilgi (i) daire butonu ─────────────────────────────
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .background(Blue50, CircleShape)
+                                .border(1.dp, Blue100, CircleShape)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication        = null,
+                                    onClick           = onInfoClick
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Default.Info,
+                                contentDescription = "Bilgi",
+                                tint               = Blue600,
+                                modifier           = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+
                     Spacer(Modifier.height(3.dp))
+
                     Text(
-                        text = menu.food_description,
-                        color = TextMuted,
-                        fontSize = 12.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                        text       = menu.food_description,
+                        color      = TextMuted,
+                        fontSize   = 12.sp,
+                        maxLines   = 2,
+                        overflow   = TextOverflow.Ellipsis,
                         lineHeight = 16.sp
                     )
+
                     Spacer(Modifier.height(8.dp))
 
-                    // Yıldız + yorum sayısı
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("★", color = GoldStar, fontSize = 13.sp)
                         Spacer(Modifier.width(3.dp))
                         Text(
-                            text = String.format("%.1f", menu.averageLike),
-                            color = GoldStar,
-                            fontSize = 12.sp,
+                            text       = String.format("%.1f", menu.averageLike),
+                            color      = GoldStar,
+                            fontSize   = 12.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(
-                            text = "💬 ${menu.count_command} yorum",
-                            color = TextMuted,
+                            text     = "💬 ${menu.count_command} yorum",
+                            color    = TextMuted,
                             fontSize = 11.sp
                         )
                     }
 
-                    // Oluşturulma tarihi – takvim ikonu ile
                     if (dateFormatted.isNotEmpty()) {
                         Spacer(Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.CalendarToday,
+                                imageVector        = Icons.Default.CalendarToday,
                                 contentDescription = "Tarih",
-                                tint = TextMuted.copy(alpha = 0.7f),
-                                modifier = Modifier.size(11.dp)
+                                tint               = TextMuted.copy(alpha = 0.7f),
+                                modifier           = Modifier.size(11.dp)
                             )
                             Spacer(Modifier.width(3.dp))
                             Text(
-                                text = dateFormatted,
-                                color = TextMuted.copy(alpha = 0.7f),
+                                text     = dateFormatted,
+                                color    = TextMuted.copy(alpha = 0.7f),
                                 fontSize = 10.sp
                             )
                         }
@@ -452,14 +450,12 @@ private fun MenuCard(
                 }
             }
 
-            // ── Kategori chip'leri (ayırıcının hemen üstü) ────────────────────
+            // ── Kategori chip'leri ─────────────────────────────────────────────
             if (categoryNames.isNotEmpty()) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier              = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment     = Alignment.CenterVertically
                 ) {
                     categoryNames.forEach { categoryName ->
                         CategoryBadge(name = categoryName)
@@ -469,35 +465,32 @@ private fun MenuCard(
 
             // ── Ayırıcı ───────────────────────────────────────────────────────
             HorizontalDivider(
-                color = Blue50,
+                color     = Blue50,
                 thickness = 1.dp,
-                modifier = Modifier.padding(horizontal = 12.dp)
+                modifier  = Modifier.padding(horizontal = 12.dp)
             )
 
             // ── Alt alan: fiyat + butonlar ─────────────────────────────────────
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                modifier          = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "₺${String.format("%.2f", menu.food_price)}",
-                    color = Blue700,
-                    fontSize = 18.sp,
+                    text       = "₺${String.format("%.2f", menu.food_price)}",
+                    color      = Blue700,
+                    fontSize   = 18.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
 
                 Spacer(Modifier.weight(1f))
 
-                // Düzenle butonu
                 OutlinedButton(
-                    onClick = onEditClick,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Blue600),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Blue100),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp)
+                    onClick         = onEditClick,
+                    colors          = ButtonDefaults.outlinedButtonColors(contentColor = Blue600),
+                    border          = androidx.compose.foundation.BorderStroke(1.dp, Blue100),
+                    shape           = RoundedCornerShape(10.dp),
+                    contentPadding  = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier        = Modifier.height(36.dp)
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = "Düzenle", modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
@@ -506,14 +499,13 @@ private fun MenuCard(
 
                 Spacer(Modifier.width(8.dp))
 
-                // Kaldır butonu
                 OutlinedButton(
-                    onClick = onDeleteClick,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.4f)),
-                    shape = RoundedCornerShape(10.dp),
+                    onClick        = onDeleteClick,
+                    colors         = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
+                    border         = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.4f)),
+                    shape          = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp)
+                    modifier       = Modifier.height(36.dp)
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = "Kaldır", modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
@@ -535,12 +527,12 @@ private fun CategoryBadge(name: String) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = name,
-            color = Blue600,
-            fontSize = 11.sp,
+            text      = name,
+            color     = Blue600,
+            fontSize  = 11.sp,
             fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            maxLines  = 1,
+            overflow  = TextOverflow.Ellipsis
         )
     }
 }
