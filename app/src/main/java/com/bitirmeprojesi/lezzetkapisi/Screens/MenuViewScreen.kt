@@ -1,5 +1,6 @@
 package com.bitirmeprojesi.lezzetkapisi.Screens
 
+import android.R
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -125,6 +126,7 @@ fun MenuViewScreen(
                                     indication = null
                                 ) {
                                     // TODO: şef profiline veya ilgili sayfaya yönlendir
+                                    Log.d("Deneme","Logo basıldı")
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -330,7 +332,7 @@ fun MenuViewScreen(
                         },
                         onDeleteClick = {
                             // TODO: silme dialogu göster veya direkt sil
-                            // viewModel.deleteMenu(menu)
+                            viewModel.menuDeleteController(menu.menu_id)
                             Log.d("Deneme", "Delete Click")
                         }
                     )

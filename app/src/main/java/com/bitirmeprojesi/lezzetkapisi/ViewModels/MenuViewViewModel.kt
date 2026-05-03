@@ -44,6 +44,20 @@ class MenuViewViewModel : ViewModel() {
         }
     }
 
+    fun menuDeleteController(menuId: String){
+        isLoading.value=true
+        repo.deleteMenu(menuId,
+            onError={ it->
+                isLoading.value=false
+                errorMessage.value=it
+            },
+            onSucces={
+                menuList.value=menuList.value.filter { it.menu_id!=menuId }
+                menuid_foodCategory.remove(menuId)
+                isLoading.value=false
+
+            })
+    }
     fun clearState(){
         menuList.value=emptyList<MenuItem>()
         errorMessage.value=""

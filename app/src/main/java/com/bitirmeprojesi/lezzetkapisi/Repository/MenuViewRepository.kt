@@ -54,9 +54,7 @@ class MenuViewRepository {
 
 
 
-    suspend fun getCategoryFromList(list:List<Int>,id_foodname_pairs: HashMap<Int, String>):List<String>{
-
-
+    fun getCategoryFromList(list:List<Int>,id_foodname_pairs: HashMap<Int, String>):List<String>{
         Log.d("MenuViewRepository","Bütün elemanları aldık.")
 
         val categoryList=mutableListOf<String>()
@@ -65,8 +63,16 @@ class MenuViewRepository {
             categoryList.add(id_foodname_pairs.get(i)!!)
         }
         return categoryList
+    }
 
+    fun deleteMenu(menuId: String,onError:(String)-> Unit,onSucces:()-> Unit){
 
+        db.collection("Business_Menu").document(menuId).delete().addOnSuccessListener {
+            onSucces()
+
+        }.addOnFailureListener {
+            onError("Silme sırasında bir hata oluştu lütfen tekrar deneyiniz.")
+        }
     }
 
 

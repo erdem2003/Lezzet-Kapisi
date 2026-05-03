@@ -1,18 +1,27 @@
 package com.bitirmeprojesi.lezzetkapisi.Screens
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.SoupKitchen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -30,6 +39,7 @@ import com.bitirmeprojesi.lezzetkapisi.Components.BusinessBottomBar
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.MenuAddViewModel
 import kotlinx.coroutines.delay
 
+// ── Renkler (MenuViewScreen ile aynı palet) ───────────────────────────────────
 private val Blue700       = Color(0xFF0D3E7A)
 private val Blue600       = Color(0xFF185FA5)
 private val Blue100       = Color(0xFFB5D4F4)
@@ -43,6 +53,9 @@ private val ErrorText     = Color(0xFFA32D2D)
 private val SuccessBg     = Color(0xFFE8F5E9)
 private val SuccessText   = Color(0xFF2E7D32)
 private val SuccessBorder = Color(0xFFA5D6A7)
+private val CardShadow    = Color(0x14000000)
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun BusinessMenuAddScreen(
@@ -59,7 +72,7 @@ fun BusinessMenuAddScreen(
     var foodDesc  by remember { mutableStateOf("") }
     var foodPrice by remember { mutableStateOf("") }
 
-    // ── Field'ları hemen temizle, 3 saniye sonra toast'ı kaldır ──
+    // Field'ları hemen temizle, 3 sn sonra toast'ı kaldır
     LaunchedEffect(succesMessage) {
         if (succesMessage != null) {
             foodName  = ""
@@ -86,8 +99,60 @@ fun BusinessMenuAddScreen(
     Box(modifier = Modifier.fillMaxSize()) {
 
         Scaffold(
-            bottomBar      = { BusinessBottomBar(navController) },
-            containerColor = PageBg
+            containerColor = PageBg,
+            // ── Top Bar – MenuViewScreen ile birebir aynı yapı ─────────────────
+            topBar = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Brush.verticalGradient(colors = listOf(Blue700, Blue600)))
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                ) {
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Sol: başlık + alt açıklama
+                        Column {
+                            Text(
+                                text       = "Yeni Menü Ekle",
+                                color      = White,
+                                fontSize   = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text     = "Fotoğraf yükle & yayınla",
+                                color    = Blue100,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    // TODO: şef profiline veya ilgili sayfaya yönlendir
+                                    Log.d("Deneme","Logo basıldı")
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SoupKitchen,
+                                contentDescription = "Şef",
+                                tint = White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            bottomBar = { BusinessBottomBar(navController) }
         ) { padding ->
 
             Column(
@@ -97,91 +162,121 @@ fun BusinessMenuAddScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // ── Fotoğraf Alanı ──
+                // ── Fotoğraf Alanı ─────────────────────────────────────────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(260.dp)
-                        .background(Blue700)
+                        .height(220.dp)
+                        .background(
+                            Brush.verticalGradient(colors = listOf(Blue700, Blue600))
+                        )
                         .clickable { galleryLauncher.launch("image/*") },
                     contentAlignment = Alignment.Center
                 ) {
                     if (photoUri != null) {
+                        // Fotoğraf seçilmişse göster
                         AsyncImage(
                             model              = photoUri,
                             contentDescription = null,
                             modifier           = Modifier.fillMaxSize(),
                             contentScale       = ContentScale.Crop
                         )
+                        // Gradient overlay
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(
                                     Brush.verticalGradient(
-                                        colors = listOf(Color.Transparent, Color.Black.copy(0.55f))
+                                        colors = listOf(Color.Transparent, Blue700.copy(alpha = 0.7f))
                                     )
-                                ),
-                            contentAlignment = Alignment.BottomStart
+                                )
+                        )
+                        // Sol alt: değiştir etiketi
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(16.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(White.copy(alpha = 0.18f))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
+                            Icon(
+                                imageVector        = Icons.Default.Edit,
+                                contentDescription = null,
+                                tint               = White,
+                                modifier           = Modifier.size(13.dp)
+                            )
                             Text(
-                                text     = "Değiştirmek için tıkla",
-                                color    = White.copy(0.85f),
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(16.dp)
+                                text       = "Fotoğrafı değiştir",
+                                color      = White,
+                                fontSize   = 12.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     } else {
+                        // Fotoğraf henüz seçilmedi – upload alanı
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(72.dp)
-                                    .background(White.copy(0.12f), CircleShape),
+                                    .background(White.copy(alpha = 0.12f), CircleShape)
+                                    .border(1.5.dp, White.copy(alpha = 0.25f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector        = Icons.Default.AddAPhoto,
                                     contentDescription = null,
                                     tint               = White,
-                                    modifier           = Modifier.size(32.dp)
+                                    modifier           = Modifier.size(30.dp)
                                 )
                             }
-                            Text(
-                                text       = "Fotoğraf Yükle",
-                                color      = White,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize   = 16.sp
-                            )
-                            Text(
-                                text     = "Kategori otomatik tespit edilecek",
-                                color    = Blue100,
-                                fontSize = 13.sp
-                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text       = "Fotoğraf Ekle",
+                                    color      = White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize   = 17.sp
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text     = "Kategori otomatik tespit edilecek",
+                                    color    = Blue100,
+                                    fontSize = 12.sp
+                                )
+                            }
                         }
                     }
                 }
 
-                // ── Kart Formu ──
+                // ── Beyaz Form Kartı (fotoğraf üstüne taşıyor) ────────────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .offset(y = (-20).dp)
-                        .shadow(8.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                        .offset(y = (-22).dp)
+                        .shadow(
+                            elevation    = 12.dp,
+                            shape        = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                            ambientColor = CardShadow,
+                            spotColor    = CardShadow
+                        )
                         .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                         .background(White)
                 ) {
                     Column(
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
 
-                        // ── Hata Mesajı ──
+                        // ── Hata Mesajı ────────────────────────────────────────
                         AnimatedVisibility(
                             visible = errorMessage != null,
-                            enter   = fadeIn() + expandVertically(),
-                            exit    = fadeOut() + shrinkVertically()
+                            enter   = fadeIn(tween(200)) + expandVertically(),
+                            exit    = fadeOut(tween(200)) + shrinkVertically()
                         ) {
                             errorMessage?.let {
                                 Row(
@@ -189,18 +284,24 @@ fun BusinessMenuAddScreen(
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(ErrorBg)
-                                        .border(1.dp, ErrorText.copy(0.2f), RoundedCornerShape(12.dp))
+                                        .border(1.dp, ErrorText.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                                         .padding(12.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment     = Alignment.CenterVertically
                                 ) {
-                                    Text(it, color = ErrorText, fontSize = 13.sp)
+                                    Text("⚠️", fontSize = 16.sp)
+                                    Text(it, color = ErrorText, fontSize = 13.sp, modifier = Modifier.weight(1f))
                                 }
+                                Spacer(Modifier.height(16.dp))
                             }
                         }
 
-                        // ── Kategoriler ──
-                        AnimatedVisibility(visible = categoryMap.isNotEmpty()) {
+                        // ── Kategori Chip'leri ─────────────────────────────────
+                        AnimatedVisibility(
+                            visible = categoryMap.isNotEmpty(),
+                            enter   = fadeIn(tween(300)) + expandVertically(),
+                            exit    = fadeOut(tween(200)) + shrinkVertically()
+                        ) {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
 
                                 Row(
@@ -208,12 +309,22 @@ fun BusinessMenuAddScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment     = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text       = "Tespit Edilen Kategoriler",
-                                        fontSize   = 13.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color      = TextMuted
-                                    )
+                                    Row(
+                                        verticalAlignment     = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(Blue600, CircleShape)
+                                        )
+                                        Text(
+                                            text       = "Tespit Edilen Kategoriler",
+                                            fontSize   = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color      = TextMuted
+                                        )
+                                    }
                                     if (categoryMap.size == 1) {
                                         Text(
                                             text     = "En az 1 kategori zorunlu",
@@ -240,86 +351,175 @@ fun BusinessMenuAddScreen(
                                     }
                                 }
 
-                                HorizontalDivider(color = Blue50, thickness = 1.dp)
+                                HorizontalDivider(
+                                    color     = Blue50,
+                                    thickness = 1.dp,
+                                    modifier  = Modifier.padding(vertical = 4.dp)
+                                )
                             }
                         }
 
-                        Text(
-                            text       = "Yemek Bilgileri",
-                            fontSize   = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color      = TextDark
-                        )
+                        // ── Bölüm Başlığı ──────────────────────────────────────
+                        Row(
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier              = Modifier.padding(bottom = 20.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Blue50, RoundedCornerShape(10.dp))
+                                    .border(1.dp, Blue100, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector        = Icons.Default.Restaurant,
+                                    contentDescription = null,
+                                    tint               = Blue600,
+                                    modifier           = Modifier.size(18.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text       = "Yemek Bilgileri",
+                                    fontSize   = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color      = TextDark
+                                )
+                                Text(
+                                    text     = "Tüm alanları doldurun",
+                                    fontSize = 11.sp,
+                                    color    = TextMuted
+                                )
+                            }
+                        }
 
-                        MenuTextField(
+                        // ── Yemek Adı ──────────────────────────────────────────
+                        ModernTextField(
                             value         = foodName,
                             onValueChange = { foodName = it },
-                            label         = "Yemek Adı"
+                            label         = "Yemek Adı",
+                            placeholder   = "örn. Adana Kebap",
+                            leadingIcon   = {
+                                Icon(
+                                    Icons.Default.Restaurant,
+                                    contentDescription = null,
+                                    tint     = if (foodName.isNotEmpty()) Blue600 else TextMuted.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         )
 
-                        MenuTextField(
+                        Spacer(Modifier.height(14.dp))
+
+                        // ── Açıklama ───────────────────────────────────────────
+                        ModernTextField(
                             value         = foodDesc,
                             onValueChange = { foodDesc = it },
                             label         = "Açıklama",
+                            placeholder   = "Yemeği kısaca tanıtın…",
                             minLines      = 3,
-                            maxLines      = 5
+                            maxLines      = 5,
+                            leadingIcon   = {
+                                Icon(
+                                    Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint     = if (foodDesc.isNotEmpty()) Blue600 else TextMuted.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         )
 
-                        MenuTextField(
+                        Spacer(Modifier.height(14.dp))
+
+                        // ── Fiyat ──────────────────────────────────────────────
+                        ModernTextField(
                             value           = foodPrice,
                             onValueChange   = { foodPrice = it },
-                            label           = "Fiyat (₺)",
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            label           = "Fiyat",
+                            placeholder     = "0.00",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            leadingIcon     = {
+                                Icon(
+                                    Icons.Default.AttachMoney,
+                                    contentDescription = null,
+                                    tint     = if (foodPrice.isNotEmpty()) Blue600 else TextMuted.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            trailingText = "₺"
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(Modifier.height(24.dp))
+
+                        // ── Ekle Butonu ────────────────────────────────────────
+                        val isEnabled = viewModel.enabledMenuAddButton.value == true
 
                         Button(
                             onClick  = {
                                 viewModel.menuAddController(foodName, foodDesc, foodPrice)
                             },
-                            enabled  = viewModel.enabledMenuAddButton.value == true,
+                            enabled  = isEnabled,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(54.dp),
+                                .height(52.dp)
+                                .shadow(
+                                    elevation    = if (isEnabled) 6.dp else 0.dp,
+                                    shape        = RoundedCornerShape(16.dp),
+                                    ambientColor = Blue600.copy(alpha = 0.3f),
+                                    spotColor    = Blue600.copy(alpha = 0.3f)
+                                ),
                             shape  = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor         = Blue600,
                                 disabledContainerColor = Blue100
                             )
                         ) {
-                            Text(
-                                text       = "Menüye Ekle",
-                                fontSize   = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color      = White
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment     = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector        = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint               = White,
+                                    modifier           = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text       = "Menüye Ekle",
+                                    fontSize   = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color      = White
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
                     }
                 }
             }
         }
 
-        // ── Success Toast ──
+        // ── Başarı Toast (üstten kayarak giriyor) ────────────────────────────
         AnimatedVisibility(
             visible  = succesMessage != null,
-            enter    = fadeIn() + slideInVertically { -it },
-            exit     = fadeOut() + slideOutVertically { -it },
+            enter    = fadeIn(tween(250)) + slideInVertically(tween(300)) { -it },
+            exit     = fadeOut(tween(200)) + slideOutVertically(tween(250)) { -it },
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 16.dp, start = 20.dp, end = 20.dp)
+                .statusBarsPadding()
+                .padding(top = 12.dp, start = 20.dp, end = 20.dp)
                 .zIndex(99f)
         ) {
             succesMessage?.let {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .shadow(8.dp, RoundedCornerShape(14.dp))
                         .clip(RoundedCornerShape(14.dp))
                         .background(SuccessBg)
                         .border(1.dp, SuccessBorder, RoundedCornerShape(14.dp))
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -333,7 +533,7 @@ fun BusinessMenuAddScreen(
                         text       = it,
                         color      = SuccessText,
                         fontSize   = 14.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                         modifier   = Modifier.weight(1f)
                     )
                 }
@@ -342,33 +542,66 @@ fun BusinessMenuAddScreen(
     }
 }
 
+// ── Modern TextField ──────────────────────────────────────────────────────────
 @Composable
-fun MenuTextField(
+fun ModernTextField(
     value           : String,
     onValueChange   : (String) -> Unit,
     label           : String,
-    minLines        : Int = 1,
-    maxLines        : Int = 1,
-    keyboardOptions : KeyboardOptions = KeyboardOptions.Default
+    placeholder     : String          = "",
+    minLines        : Int             = 1,
+    maxLines        : Int             = 1,
+    keyboardOptions : KeyboardOptions = KeyboardOptions.Default,
+    leadingIcon     : (@Composable () -> Unit)? = null,
+    trailingText    : String?         = null
 ) {
+    val isFilled = value.isNotEmpty()
+
     OutlinedTextField(
         value           = value,
         onValueChange   = onValueChange,
-        label           = { Text(label) },
+        label           = {
+            Text(
+                text       = label,
+                fontSize   = 13.sp,
+                fontWeight = if (isFilled) FontWeight.SemiBold else FontWeight.Normal
+            )
+        },
+        placeholder     = {
+            Text(
+                text     = placeholder,
+                fontSize = 13.sp,
+                color    = TextMuted.copy(alpha = 0.5f)
+            )
+        },
+        leadingIcon     = leadingIcon,
+        trailingIcon    = if (trailingText != null) ({
+            Text(
+                text       = trailingText,
+                color      = Blue600,
+                fontSize   = 15.sp,
+                fontWeight = FontWeight.Bold,
+                modifier   = Modifier.padding(end = 4.dp)
+            )
+        }) else null,
         modifier        = Modifier.fillMaxWidth(),
         shape           = RoundedCornerShape(14.dp),
         minLines        = minLines,
         maxLines        = maxLines,
         keyboardOptions = keyboardOptions,
         colors          = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = Blue600,
-            unfocusedBorderColor = Blue100,
-            focusedLabelColor    = Blue600,
-            cursorColor          = Blue600
+            focusedBorderColor      = Blue600,
+            unfocusedBorderColor    = if (isFilled) Blue100 else Color(0xFFDDE6F0),
+            focusedLabelColor       = Blue600,
+            unfocusedLabelColor     = TextMuted,
+            focusedContainerColor   = White,
+            unfocusedContainerColor = if (isFilled) Blue50.copy(alpha = 0.5f) else White,
+            cursorColor             = Blue600
         )
     )
 }
 
+// ── Kategori Chip ─────────────────────────────────────────────────────────────
 @Composable
 fun CategoryChip(
     name      : String,
@@ -378,32 +611,34 @@ fun CategoryChip(
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50.dp))
-            .background(Blue50)
+            .background(if (canRemove) Blue50 else Color(0xFFF0F4FA))
             .border(1.dp, Blue100, RoundedCornerShape(50.dp))
-            .padding(start = 14.dp, end = 8.dp, top = 7.dp, bottom = 7.dp),
+            .padding(start = 12.dp, end = if (canRemove) 6.dp else 12.dp, top = 7.dp, bottom = 7.dp),
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
             text       = name,
             color      = Blue600,
-            fontSize   = 13.sp,
-            fontWeight = FontWeight.Medium
+            fontSize   = 12.sp,
+            fontWeight = FontWeight.SemiBold
         )
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .clip(CircleShape)
-                .background(if (canRemove) Blue100 else Blue50)
-                .clickable(enabled = canRemove) { onRemove() },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector        = Icons.Default.Close,
-                contentDescription = "Sil",
-                tint               = if (canRemove) Blue600 else Blue100,
-                modifier           = Modifier.size(12.dp)
-            )
+        if (canRemove) {
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(Blue100)
+                    .clickable { onRemove() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector        = Icons.Default.Close,
+                    contentDescription = "Sil",
+                    tint               = Blue700,
+                    modifier           = Modifier.size(10.dp)
+                )
+            }
         }
     }
 }
