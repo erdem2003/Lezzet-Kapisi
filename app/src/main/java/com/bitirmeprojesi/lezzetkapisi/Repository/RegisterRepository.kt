@@ -194,8 +194,10 @@ class RegisterRepository {
         onError: (String) -> Unit
     ) {
         val business = hashMapOf(
+            "business_id" to uid,
             "email" to email,
             "business_name" to businessName,
+            "business_name_lower" to businessName.lowercase(),
             "description" to description,
             "city" to city,
             "profile_photo" to photoUrl,

@@ -8,14 +8,18 @@ import androidx.navigation.compose.composable
 import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessFeedScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessMenuAddScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessMenuEditScreen
+import com.bitirmeprojesi.lezzetkapisi.Screens.BusinessPageScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.MenuViewScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.RegisterScreen
+import com.bitirmeprojesi.lezzetkapisi.Screens.SearchScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.StartScreen
 import com.bitirmeprojesi.lezzetkapisi.Screens.UserFeedScreen
+import com.bitirmeprojesi.lezzetkapisi.ViewModels.BusinessPageViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.MenuAddViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.MenuEditViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.MenuViewViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.RegisterViewModel
+import com.bitirmeprojesi.lezzetkapisi.ViewModels.SearchViewModel
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.StartViewModel
 import com.erdemkilic.bitirme_projesi.Screens.LoginScreen
 import com.erdemkilic.bitirme_projesi.ViewModels.LoginViewModel
@@ -47,7 +51,8 @@ fun MyNavHost(navController: NavHostController){
             BusinessFeedScreen(navController)
         }
         composable("search") {
-
+            val searchViewModel: SearchViewModel=viewModel()
+            SearchScreen(navController,searchViewModel)
         }
         composable("chatbot") {
 
@@ -72,6 +77,11 @@ fun MyNavHost(navController: NavHostController){
         composable("user_feed") {
 
             UserFeedScreen()
+        }
+        composable("business_page/{business_id}") { backStackEntry->
+            val business_id=backStackEntry.arguments?.getString("business_id")?:""
+            val businessPageViewModel: BusinessPageViewModel=viewModel()
+            BusinessPageScreen(navController,business_id,businessPageViewModel)
         }
 
 
