@@ -286,8 +286,6 @@ fun MenuViewScreen(
                         menu          = menu,
                         categoryNames = viewModel.menuid_foodCategory[menu.menu_id] ?: emptyList(),
                         onCardClick   = {
-                            // TODO: yemek detay sayfasına yönlendir
-                            // navController.navigate("menu_detail/${menu.menu_id}")
                             Log.d("Deneme", "Card Click")
                         },
                         onEditClick   = {
@@ -299,8 +297,6 @@ fun MenuViewScreen(
                             Log.d("Deneme", "Delete Click")
                         },
                         onInfoClick   = {
-                            // TODO: yemek bilgi/detay sayfasına yönlendir
-                            // navController.navigate("menu_info/${menu.menu_id}")
                             Log.d("Deneme", "Info Click - menu_id: ${menu.menu_id}")
                         }
                     )
@@ -321,12 +317,86 @@ private fun MenuCard(
     onDeleteClick: () -> Unit,
     onInfoClick: () -> Unit
 ) {
+    // ── Silme onay dialog state'i ─────────────────────────────────────────────
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     val dateFormatted = remember(menu.createdDate) {
         try {
             SimpleDateFormat("dd MMM yyyy", Locale("tr")).format(menu.createdDate.toDate())
         } catch (e: Exception) { "" }
     }
 
+    // ── Silme Onay Dialog'u ───────────────────────────────────────────────────
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            containerColor   = White,
+            shape            = RoundedCornerShape(20.dp),
+            icon = {
+                Box(
+                    modifier         = Modifier
+                        .size(52.dp)
+                        .background(DangerRed.copy(alpha = 0.10f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector        = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint               = DangerRed,
+                        modifier           = Modifier.size(26.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text       = "Menüyü Kaldır",
+                    color      = TextDark,
+                    fontSize   = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text     = "\"${menu.food_name}\" menüden kalıcı olarak kaldırılacak. Emin misiniz?",
+                    color    = TextMuted,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp
+                )
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showDeleteDialog = false },
+                    colors  = ButtonDefaults.outlinedButtonColors(contentColor = TextMuted),
+                    border  = androidx.compose.foundation.BorderStroke(1.dp, Blue100),
+                    shape   = RoundedCornerShape(12.dp),
+                    modifier = Modifier.height(44.dp)
+                ) {
+                    Text("Vazgeç", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDeleteClick()
+                    },
+                    colors   = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                    shape    = RoundedCornerShape(12.dp),
+                    modifier = Modifier.height(44.dp)
+                ) {
+                    Icon(
+                        imageVector        = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier           = Modifier.size(15.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Evet, Kaldır", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
+
+    // ── Kart ─────────────────────────────────────────────────────────────────
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -367,13 +437,13 @@ private fun MenuCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text      = menu.food_name,
-                            color     = TextDark,
-                            fontSize  = 15.sp,
+                            text       = menu.food_name,
+                            color      = TextDark,
+                            fontSize   = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines  = 1,
-                            overflow  = TextOverflow.Ellipsis,
-                            modifier  = Modifier.weight(1f)
+                            maxLines   = 1,
+                            overflow   = TextOverflow.Ellipsis,
+                            modifier   = Modifier.weight(1f)
                         )
 
                         Spacer(Modifier.width(8.dp))
@@ -485,12 +555,12 @@ private fun MenuCard(
                 Spacer(Modifier.weight(1f))
 
                 OutlinedButton(
-                    onClick         = onEditClick,
-                    colors          = ButtonDefaults.outlinedButtonColors(contentColor = Blue600),
-                    border          = androidx.compose.foundation.BorderStroke(1.dp, Blue100),
-                    shape           = RoundedCornerShape(10.dp),
-                    contentPadding  = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    modifier        = Modifier.height(36.dp)
+                    onClick        = onEditClick,
+                    colors         = ButtonDefaults.outlinedButtonColors(contentColor = Blue600),
+                    border         = androidx.compose.foundation.BorderStroke(1.dp, Blue100),
+                    shape          = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier       = Modifier.height(36.dp)
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = "Düzenle", modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
@@ -499,8 +569,9 @@ private fun MenuCard(
 
                 Spacer(Modifier.width(8.dp))
 
+                // ── Kaldır butonu → dialog açar ───────────────────────────────
                 OutlinedButton(
-                    onClick        = onDeleteClick,
+                    onClick        = { showDeleteDialog = true }, // ← artık direkt silmiyor
                     colors         = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
                     border         = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.4f)),
                     shape          = RoundedCornerShape(10.dp),
@@ -527,12 +598,12 @@ private fun CategoryBadge(name: String) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text      = name,
-            color     = Blue600,
-            fontSize  = 11.sp,
+            text       = name,
+            color      = Blue600,
+            fontSize   = 11.sp,
             fontWeight = FontWeight.Medium,
-            maxLines  = 1,
-            overflow  = TextOverflow.Ellipsis
+            maxLines   = 1,
+            overflow   = TextOverflow.Ellipsis
         )
     }
 }
