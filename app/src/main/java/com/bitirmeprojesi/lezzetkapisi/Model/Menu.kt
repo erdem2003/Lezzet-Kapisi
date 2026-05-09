@@ -12,6 +12,7 @@ data class Menu(
     val category_ids: List<Int> = emptyList(),
     val averageLike: Double=0.0,
     val count_command: Int=0,
-    val createdDate:Timestamp=com.google.firebase.Timestamp.now()
+    val createdDate:Timestamp=com.google.firebase.Timestamp.now(),
+    val active: Boolean=true
 
 )

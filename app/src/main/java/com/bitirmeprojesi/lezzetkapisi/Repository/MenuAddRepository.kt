@@ -69,7 +69,8 @@ class MenuAddRepository {
                         food_description=food_description,
                         food_price=food_price,
                         food_photo_url = downloadUrl.toString(),
-                        category_ids=categoryIdList
+                        category_ids=categoryIdList,
+                        active = true
 
                     )
 

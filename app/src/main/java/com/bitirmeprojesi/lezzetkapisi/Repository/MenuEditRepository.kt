@@ -25,7 +25,8 @@ class MenuEditRepository {
                 category_ids = doc.get("category_ids") as List<Int>?:emptyList(),
                 averageLike = doc.getDouble("averageLike")!!,
                 count_command = doc.getDouble("count_command")!!.toInt(),
-                createdDate = doc.getTimestamp("createdDate")!!
+                createdDate = doc.getTimestamp("createdDate")!!,
+                active = doc.getBoolean("active")!!
             )
             onSuccess(menu)
 
@@ -34,7 +35,7 @@ class MenuEditRepository {
         }
     }
 
-    fun editMenu(menu_id:String,food_name:String,food_description:String,food_price: String,onError: (String) -> Unit,onSuccess: () -> Unit){
+    fun editMenu(menu_id:String, food_name:String, food_description:String, food_price: String, active: Boolean, onError: (String) -> Unit, onSuccess: () -> Unit){
         val food_price_d=food_price.toDoubleOrNull()
         if (food_name=="" || food_description=="" || food_price_d==null){
             onError("Bütün alanları doldurmanız gereklidir")
@@ -43,7 +44,8 @@ class MenuEditRepository {
         val update_menu=hashMapOf<String,Any>(
             "food_name" to food_name,
             "food_description" to food_description,
-            "food_price" to food_price_d
+            "food_price" to food_price_d,
+            "active" to active
         )
 
         db.collection("Business_Menu").document(menu_id).update(update_menu).addOnSuccessListener {

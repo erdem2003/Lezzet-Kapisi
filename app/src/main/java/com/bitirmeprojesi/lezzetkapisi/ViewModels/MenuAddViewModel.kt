@@ -138,31 +138,37 @@ class MenuAddViewModel : ViewModel() {
     }
 
     fun menuAddController(foodname: String, fooddescription: String, foodprice: String) {
-
+        enabledMenuAddButton.value=false
         val foodprice_d = foodprice.toDoubleOrNull()
 
         if (foodname.isBlank()) {
             errorMessage.value = "Yemek Adı boş bırakılamaz. Lütfen geçerli bir isim giriniz."
+            enabledMenuAddButton.value=true
             return
         }
         if (fooddescription.isBlank()) {
             errorMessage.value = "Yemek Açıklaması boş bırakılamaz. Lütfen geçerli bir açıklama giriniz."
+            enabledMenuAddButton.value=true
             return
         }
         if (foodprice.isBlank()) {
             errorMessage.value = "Lütfen yemeğin fiyatını giriniz."
+            enabledMenuAddButton.value=true
             return
         }
         if (foodprice_d == null) {
             errorMessage.value = "Lütfen rakamsal olarak fiyat giriniz."
+            enabledMenuAddButton.value=true
             return
         }
         if (foodprice_d <= 0) {
             errorMessage.value = "Fiyat 0 TL'den yüksek olmalıdır."
+            enabledMenuAddButton.value=true
             return
         }
         if (photoUri.value == null) {
             errorMessage.value = "Lütfen bir fotoğraf seçiniz."
+            enabledMenuAddButton.value=true
             return
         }
 
@@ -175,8 +181,11 @@ class MenuAddViewModel : ViewModel() {
             food_price       = foodprice_d,
             foodPhoto        = photoUri.value!!,
             categoryIdList   = categoryIdList,
-            onError          = { errorMessage.value = it },
+            onError          = { errorMessage.value = it
+                                enabledMenuAddButton.value=true
+                               },
             onSucces         = {
+                enabledMenuAddButton.value=false
                 succesMessage.value="Başarıyla eklendi ..."
                 clearState()  // Başarılıysa state'i temizle
             }

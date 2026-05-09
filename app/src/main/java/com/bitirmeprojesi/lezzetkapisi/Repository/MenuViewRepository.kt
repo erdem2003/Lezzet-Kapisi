@@ -42,7 +42,8 @@ class MenuViewRepository {
                     category_ids = doc.get("category_ids") as List<Int>?:emptyList(),
                     averageLike = doc.getDouble("averageLike")!!,
                     count_command = doc.getDouble("count_command")!!.toInt(),
-                    createdDate = doc.getTimestamp("createdDate")!!
+                    createdDate = doc.getTimestamp("createdDate")!!,
+                    active=doc.getBoolean("active")!!
                 )
                 menuList.add(menu)
 

@@ -28,7 +28,7 @@ import com.bitirmeprojesi.lezzetkapisi.Components.BusinessBottomBar
 import com.bitirmeprojesi.lezzetkapisi.ViewModels.MenuEditViewModel
 import kotlinx.coroutines.delay
 
-// ── Renk paleti (MenuAddScreen ile aynı) ─────────────────────────────────────
+// ── Renk paleti ──────────────────────────────────────────────────────────────
 private val Blue700       = Color(0xFF0D3E7A)
 private val Blue600       = Color(0xFF185FA5)
 private val Blue100       = Color(0xFFB5D4F4)
@@ -43,6 +43,12 @@ private val SuccessBg     = Color(0xFFE8F5E9)
 private val SuccessText   = Color(0xFF2E7D32)
 private val SuccessBorder = Color(0xFFA5D6A7)
 private val CardShadow    = Color(0x14000000)
+private val ActiveGreen   = Color(0xFF2E7D32)
+private val ActiveBg      = Color(0xFFE8F5E9)
+private val ActiveBorder  = Color(0xFFA5D6A7)
+private val PassiveAmber  = Color(0xFF8D6200)
+private val PassiveBg     = Color(0xFFFFF8E1)
+private val PassiveBorder = Color(0xFFFFE082)
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -57,10 +63,10 @@ fun BusinessMenuEditScreen(
     val successMessage by viewModel.success_message
     val isLoading      by viewModel.isLoading
 
-    // Mevcut menüden field'ları doldur (tek seferlik)
     var foodName  by remember { mutableStateOf("") }
     var foodDesc  by remember { mutableStateOf("") }
     var foodPrice by remember { mutableStateOf("") }
+    var active    by remember { mutableStateOf(true) }
 
     // Menü yüklendikten sonra field'ları doldur
     LaunchedEffect(menu) {
@@ -68,15 +74,14 @@ fun BusinessMenuEditScreen(
             foodName  = it.food_name
             foodDesc  = it.food_description
             foodPrice = it.food_price.toString()
+            active    = it.active
         }
     }
 
-    // Ekran ilk açıldığında veriyi çek
     LaunchedEffect(menu_id) {
         viewModel.showMenu(menu_id)
     }
 
-    // Başarı mesajını 3 sn sonra temizle
     LaunchedEffect(successMessage) {
         if (successMessage.isNotEmpty()) {
             delay(3000)
@@ -84,7 +89,6 @@ fun BusinessMenuEditScreen(
         }
     }
 
-    // Hata mesajını 3 sn sonra temizle
     LaunchedEffect(errorMessage) {
         if (errorMessage.isNotEmpty()) {
             delay(3000)
@@ -109,7 +113,6 @@ fun BusinessMenuEditScreen(
                         verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Sol: geri butonu + başlık
                         Row(
                             verticalAlignment     = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -146,7 +149,6 @@ fun BusinessMenuEditScreen(
                             }
                         }
 
-                        // Sağ: ikon
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
@@ -171,7 +173,6 @@ fun BusinessMenuEditScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // ── Yükleniyor göstergesi ───────────────────────────────────
                 AnimatedVisibility(
                     visible  = isLoading,
                     modifier = Modifier.align(Alignment.Center),
@@ -183,15 +184,10 @@ fun BusinessMenuEditScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         CircularProgressIndicator(color = Blue600, strokeWidth = 3.dp)
-                        Text(
-                            text     = "Yükleniyor…",
-                            color    = TextMuted,
-                            fontSize = 14.sp
-                        )
+                        Text(text = "Yükleniyor…", color = TextMuted, fontSize = 14.sp)
                     }
                 }
 
-                // ── İçerik (yükleme bitince göster) ────────────────────────
                 AnimatedVisibility(
                     visible = !isLoading,
                     enter   = fadeIn(tween(300)),
@@ -203,7 +199,7 @@ fun BusinessMenuEditScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
 
-                        // ── Fotoğraf Alanı (salt görüntü, tıklanamaz) ──────
+                        // ── Fotoğraf Alanı ─────────────────────────────────
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -220,7 +216,6 @@ fun BusinessMenuEditScreen(
                                     modifier           = Modifier.fillMaxSize(),
                                     contentScale       = ContentScale.Crop
                                 )
-                                // Gradient overlay
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
@@ -230,7 +225,6 @@ fun BusinessMenuEditScreen(
                                             )
                                         )
                                 )
-                                // Sol alt: foto etiketi
                                 Row(
                                     modifier = Modifier
                                         .align(Alignment.BottomStart)
@@ -255,7 +249,6 @@ fun BusinessMenuEditScreen(
                                     )
                                 }
                             } else {
-                                // Fotoğraf yoksa placeholder
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -284,7 +277,7 @@ fun BusinessMenuEditScreen(
                             }
                         }
 
-                        // ── Beyaz Form Kartı (fotoğraf üstüne taşıyor) ────
+                        // ── Beyaz Form Kartı ───────────────────────────────
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -299,7 +292,7 @@ fun BusinessMenuEditScreen(
                                 .background(White)
                         ) {
                             Column(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                                modifier            = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
                                 verticalArrangement = Arrangement.spacedBy(0.dp)
                             ) {
 
@@ -425,6 +418,111 @@ fun BusinessMenuEditScreen(
                                     trailingText = "₺"
                                 )
 
+                                Spacer(Modifier.height(20.dp))
+
+                                // ── Aktif / Pasif Seçici ───────────────────
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(
+                                        verticalAlignment     = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(Blue600, CircleShape)
+                                        )
+                                        Text(
+                                            text       = "Menü Durumu",
+                                            fontSize   = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color      = TextMuted
+                                        )
+                                    }
+
+                                    Row(
+                                        modifier            = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        // Aktif seçeneği
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(if (active) ActiveBg else White)
+                                                .border(
+                                                    width = if (active) 2.dp else 1.dp,
+                                                    color = if (active) ActiveGreen else Color(0xFFDDE6F0),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
+                                                .clickable(
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication        = null
+                                                ) { active = true }
+                                                .padding(vertical = 14.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Row(
+                                                verticalAlignment     = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(10.dp)
+                                                        .background(
+                                                            color = if (active) ActiveGreen else Color(0xFFCDD8E3),
+                                                            shape = CircleShape
+                                                        )
+                                                )
+                                                Text(
+                                                    text       = "Aktif",
+                                                    fontSize   = 14.sp,
+                                                    fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+                                                    color      = if (active) ActiveGreen else TextMuted
+                                                )
+                                            }
+                                        }
+
+                                        // Pasif seçeneği
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(if (!active) PassiveBg else White)
+                                                .border(
+                                                    width = if (!active) 2.dp else 1.dp,
+                                                    color = if (!active) PassiveAmber else Color(0xFFDDE6F0),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
+                                                .clickable(
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication        = null
+                                                ) { active = false }
+                                                .padding(vertical = 14.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Row(
+                                                verticalAlignment     = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(10.dp)
+                                                        .background(
+                                                            color = if (!active) PassiveAmber else Color(0xFFCDD8E3),
+                                                            shape = CircleShape
+                                                        )
+                                                )
+                                                Text(
+                                                    text       = "Pasif",
+                                                    fontSize   = 14.sp,
+                                                    fontWeight = if (!active) FontWeight.Bold else FontWeight.Normal,
+                                                    color      = if (!active) PassiveAmber else TextMuted
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
                                 Spacer(Modifier.height(24.dp))
 
                                 // ── Kaydet Butonu ──────────────────────────
@@ -435,7 +533,7 @@ fun BusinessMenuEditScreen(
 
                                 Button(
                                     onClick  = {
-                                        viewModel.editMenu(menu_id, foodName, foodDesc, foodPrice)
+                                        viewModel.editMenu(menu_id, foodName, foodDesc, foodPrice, active)
                                     },
                                     enabled  = isEnabled,
                                     modifier = Modifier
@@ -488,7 +586,7 @@ fun BusinessMenuEditScreen(
             }
         }
 
-        // ── Başarı Toast (üstten kayarak giriyor) ────────────────────────────
+        // ── Başarı Toast ──────────────────────────────────────────────────────
         AnimatedVisibility(
             visible  = successMessage.isNotEmpty(),
             enter    = fadeIn(tween(250)) + slideInVertically(tween(300)) { -it },

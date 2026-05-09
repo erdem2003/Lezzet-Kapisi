@@ -29,9 +29,9 @@ class MenuEditViewModel: ViewModel() {
             })
     }
 
-    fun editMenu(menu_id: String,food_name: String,food_description:String,food_price: String){
+    fun editMenu(menu_id: String,food_name: String,food_description:String,food_price: String,active: Boolean){
         isLoading.value=true
-        repo.editMenu(menu_id = menu_id,food_name,food_description,food_price,
+        repo.editMenu(menu_id = menu_id,food_name,food_description,food_price,active,
             onError = { error_it->
                 error_message.value=error_it
                 isLoading.value=false

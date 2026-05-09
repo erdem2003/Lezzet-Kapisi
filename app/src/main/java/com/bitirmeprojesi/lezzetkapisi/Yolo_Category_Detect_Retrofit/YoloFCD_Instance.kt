@@ -14,6 +14,4 @@ object YoloFCD_Instance { // HTTP client nesnesi olusturuyoruz
             .create(YoloFCD_Service::class.java) // Bu servisteki endpointleri kullanabilirsin diyoruz.
     }
 
-
-
 }

@@ -47,18 +47,22 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 // ── Renkler ──────────────────────────────────────────────────────────────────
-private val Blue700    = Color(0xFF0D3E7A)
-private val Blue600    = Color(0xFF185FA5)
-private val Blue100    = Color(0xFFB5D4F4)
-private val Blue50     = Color(0xFFE6F1FB)
-private val PageBg     = Color(0xFFF0F4FA)
-private val White      = Color(0xFFFFFFFF)
-private val TextDark   = Color(0xFF0C1A2E)
-private val TextMuted  = Color(0xFF5A7399)
-private val ErrorText  = Color(0xFFA32D2D)
-private val DangerRed  = Color(0xFFD32F2F)
-private val GoldStar   = Color(0xFFF9A825)
-private val CardShadow = Color(0x14000000)
+private val Blue700      = Color(0xFF0D3E7A)
+private val Blue600      = Color(0xFF185FA5)
+private val Blue100      = Color(0xFFB5D4F4)
+private val Blue50       = Color(0xFFE6F1FB)
+private val PageBg       = Color(0xFFF0F4FA)
+private val White        = Color(0xFFFFFFFF)
+private val TextDark     = Color(0xFF0C1A2E)
+private val TextMuted    = Color(0xFF5A7399)
+private val ErrorText    = Color(0xFFA32D2D)
+private val DangerRed    = Color(0xFFD32F2F)
+private val GoldStar     = Color(0xFFF9A825)
+private val CardShadow   = Color(0x14000000)
+private val ActiveGreen  = Color(0xFF2E7D32)
+private val ActiveBg     = Color(0xCC2E7D32)
+private val PassiveAmber = Color(0xFF8D6200)
+private val PassiveBg    = Color(0xCCF9A825)
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -179,7 +183,6 @@ fun MenuViewScreen(
         bottomBar = { BusinessBottomBar(navController = navController) }
     ) { paddingValues ->
 
-        // ── Loading ───────────────────────────────────────────────────────────
         if (viewModel.isLoading.value == true) {
             Box(
                 modifier         = Modifier.fillMaxSize().padding(paddingValues),
@@ -194,7 +197,6 @@ fun MenuViewScreen(
             return@Scaffold
         }
 
-        // ── Hata mesajı ───────────────────────────────────────────────────────
         if (errorMessage.isNotEmpty()) {
             Box(
                 modifier         = Modifier.fillMaxSize().padding(paddingValues),
@@ -215,9 +217,9 @@ fun MenuViewScreen(
                         Text(text = errorMessage, color = ErrorText, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(16.dp))
                         Button(
-                            onClick = { viewModel.clearState(); viewModel.menuListController() },
-                            colors  = ButtonDefaults.buttonColors(containerColor = Blue600),
-                            shape   = RoundedCornerShape(12.dp),
+                            onClick  = { viewModel.clearState(); viewModel.menuListController() },
+                            colors   = ButtonDefaults.buttonColors(containerColor = Blue600),
+                            shape    = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth().height(48.dp)
                         ) {
                             Text("Tekrar Dene", fontWeight = FontWeight.SemiBold)
@@ -228,7 +230,6 @@ fun MenuViewScreen(
             return@Scaffold
         }
 
-        // ── Boş liste ─────────────────────────────────────────────────────────
         if (filteredMenuList.isEmpty()) {
             Box(
                 modifier         = Modifier.fillMaxSize().padding(paddingValues),
@@ -256,10 +257,10 @@ fun MenuViewScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text  = if (searchQuery.isBlank())
+                        text     = if (searchQuery.isBlank())
                             "Menü eklemek için alt bardaki\nMenu butonuna basabilirsin"
                         else "Farklı bir isim deneyin",
-                        color = TextMuted,
+                        color    = TextMuted,
                         fontSize = 13.sp
                     )
                 }
@@ -267,10 +268,9 @@ fun MenuViewScreen(
             return@Scaffold
         }
 
-        // ── Liste ─────────────────────────────────────────────────────────────
         LazyColumn(
-            modifier       = Modifier.fillMaxSize().padding(paddingValues),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+            modifier            = Modifier.fillMaxSize().padding(paddingValues),
+            contentPadding      = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             itemsIndexed(
@@ -285,9 +285,7 @@ fun MenuViewScreen(
                     MenuCard(
                         menu          = menu,
                         categoryNames = viewModel.menuid_foodCategory[menu.menu_id] ?: emptyList(),
-                        onCardClick   = {
-                            Log.d("Deneme", "Card Click")
-                        },
+                        onCardClick   = { Log.d("Deneme", "Card Click") },
                         onEditClick   = {
                             navController.navigate("business_menu_edit/${menu.menu_id}")
                             Log.d("Deneme", "Edit Click")
@@ -296,9 +294,7 @@ fun MenuViewScreen(
                             viewModel.menuDeleteController(menu.menu_id)
                             Log.d("Deneme", "Delete Click")
                         },
-                        onInfoClick   = {
-                            Log.d("Deneme", "Info Click - menu_id: ${menu.menu_id}")
-                        }
+                        onInfoClick   = { Log.d("Deneme", "Info Click - menu_id: ${menu.menu_id}") }
                     )
                 }
             }
@@ -317,7 +313,6 @@ private fun MenuCard(
     onDeleteClick: () -> Unit,
     onInfoClick: () -> Unit
 ) {
-    // ── Silme onay dialog state'i ─────────────────────────────────────────────
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     val dateFormatted = remember(menu.createdDate) {
@@ -326,7 +321,6 @@ private fun MenuCard(
         } catch (e: Exception) { "" }
     }
 
-    // ── Silme Onay Dialog'u ───────────────────────────────────────────────────
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -357,18 +351,18 @@ private fun MenuCard(
             },
             text = {
                 Text(
-                    text     = "\"${menu.food_name}\" menüden kalıcı olarak kaldırılacak. Emin misiniz?",
-                    color    = TextMuted,
-                    fontSize = 13.sp,
+                    text       = "\"${menu.food_name}\" menüden kalıcı olarak kaldırılacak. Emin misiniz?",
+                    color      = TextMuted,
+                    fontSize   = 13.sp,
                     lineHeight = 20.sp
                 )
             },
             dismissButton = {
                 OutlinedButton(
-                    onClick = { showDeleteDialog = false },
-                    colors  = ButtonDefaults.outlinedButtonColors(contentColor = TextMuted),
-                    border  = androidx.compose.foundation.BorderStroke(1.dp, Blue100),
-                    shape   = RoundedCornerShape(12.dp),
+                    onClick  = { showDeleteDialog = false },
+                    colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextMuted),
+                    border   = androidx.compose.foundation.BorderStroke(1.dp, Blue100),
+                    shape    = RoundedCornerShape(12.dp),
                     modifier = Modifier.height(44.dp)
                 ) {
                     Text("Vazgeç", fontSize = 13.sp, fontWeight = FontWeight.Medium)
@@ -376,19 +370,12 @@ private fun MenuCard(
             },
             confirmButton = {
                 Button(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDeleteClick()
-                    },
+                    onClick  = { showDeleteDialog = false; onDeleteClick() },
                     colors   = ButtonDefaults.buttonColors(containerColor = DangerRed),
                     shape    = RoundedCornerShape(12.dp),
                     modifier = Modifier.height(44.dp)
                 ) {
-                    Icon(
-                        imageVector        = Icons.Default.Delete,
-                        contentDescription = null,
-                        modifier           = Modifier.size(15.dp)
-                    )
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(15.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("Evet, Kaldır", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
@@ -396,7 +383,6 @@ private fun MenuCard(
         )
     }
 
-    // ── Kart ─────────────────────────────────────────────────────────────────
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -416,21 +402,47 @@ private fun MenuCard(
                 modifier          = Modifier.fillMaxWidth().padding(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                AsyncImage(
-                    model              = menu.food_photo_url,
-                    contentDescription = menu.food_name,
-                    contentScale       = ContentScale.Crop,
-                    modifier           = Modifier
-                        .size(88.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Blue50)
-                        .border(1.dp, Blue100, RoundedCornerShape(12.dp))
-                )
+                // ── Fotoğraf + sol üst köşe aktif/pasif badge'i ───────────────
+                Box {
+                    AsyncImage(
+                        model              = menu.food_photo_url,
+                        contentDescription = menu.food_name,
+                        contentScale       = ContentScale.Crop,
+                        modifier           = Modifier
+                            .size(88.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Blue50)
+                            .border(1.dp, Blue100, RoundedCornerShape(12.dp))
+                    )
+
+                    // ── Aktif / Pasif badge – sol üst köşe ────────────────────
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(5.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (menu.active) ActiveBg else PassiveBg)
+                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .background(White, CircleShape)
+                        )
+                        Text(
+                            text       = if (menu.active) "Aktif" else "Pasif",
+                            color      = White,
+                            fontSize   = 9.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
 
                 Spacer(Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    // ── Başlık satırı: isim + info butonu ─────────────────────
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
                         verticalAlignment     = Alignment.CenterVertically,
@@ -448,7 +460,6 @@ private fun MenuCard(
 
                         Spacer(Modifier.width(8.dp))
 
-                        // ── Bilgi (i) daire butonu ─────────────────────────────
                         Box(
                             modifier = Modifier
                                 .size(26.dp)
@@ -527,13 +538,10 @@ private fun MenuCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
-                    categoryNames.forEach { categoryName ->
-                        CategoryBadge(name = categoryName)
-                    }
+                    categoryNames.forEach { CategoryBadge(name = it) }
                 }
             }
 
-            // ── Ayırıcı ───────────────────────────────────────────────────────
             HorizontalDivider(
                 color     = Blue50,
                 thickness = 1.dp,
@@ -542,7 +550,9 @@ private fun MenuCard(
 
             // ── Alt alan: fiyat + butonlar ─────────────────────────────────────
             Row(
-                modifier          = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                modifier          = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -569,9 +579,8 @@ private fun MenuCard(
 
                 Spacer(Modifier.width(8.dp))
 
-                // ── Kaldır butonu → dialog açar ───────────────────────────────
                 OutlinedButton(
-                    onClick        = { showDeleteDialog = true }, // ← artık direkt silmiyor
+                    onClick        = { showDeleteDialog = true },
                     colors         = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
                     border         = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.4f)),
                     shape          = RoundedCornerShape(10.dp),
