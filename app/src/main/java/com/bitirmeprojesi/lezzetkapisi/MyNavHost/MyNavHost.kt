@@ -76,7 +76,7 @@ fun MyNavHost(navController: NavHostController){
         }
         composable("user_feed") {
 
-            UserFeedScreen()
+            UserFeedScreen(navController)
         }
         composable("business_page/{business_id}") { backStackEntry->
             val business_id=backStackEntry.arguments?.getString("business_id")?:""

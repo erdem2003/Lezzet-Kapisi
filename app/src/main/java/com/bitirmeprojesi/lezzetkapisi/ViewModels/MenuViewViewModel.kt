@@ -30,8 +30,6 @@ class MenuViewViewModel : ViewModel() {
                 errorMessage.value=hataMessage
             },  onSucces = { menuList_it->
                 menuList.value=menuList_it
-
-
             })
 
             val id_foodname_pairs=menuAddRepo.getFoodCollectionInfo()

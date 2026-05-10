@@ -1,0 +1,3 @@
+Yorum sayısını arttır.
+Yıldız ekle.
+Business Page Screende üstten kaydırınca circular gelmiyor işte bazı ui kötülükler var düzelt.

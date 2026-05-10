@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
+import kotlinx.coroutines.tasks.await
 
 
 class RegisterRepository {
@@ -115,6 +116,7 @@ class RegisterRepository {
         onError: (String) -> Unit
     ) {
         val user = hashMapOf(
+            "user_id" to uid,
             "email" to email,
             "username" to username,
             "city" to city,
@@ -270,6 +272,26 @@ class RegisterRepository {
                 onError("Şehirler yüklenemedi")
             }
     }
+
+    suspend fun getCitiesSuspend(
+        onSuccess: (List<City>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            val result = db.collection("Cities").get().await()
+            val cityList = result.map { doc ->
+                City(
+                    plate = doc.getString("plate") ?: "",
+                    city_name = doc.getString("city_name") ?: ""
+                )
+            }
+            onSuccess(cityList)
+        } catch (e: Exception) {
+            onError("Şehirler yüklenemedi")
+        }
+    }
+
+
 
 }
 

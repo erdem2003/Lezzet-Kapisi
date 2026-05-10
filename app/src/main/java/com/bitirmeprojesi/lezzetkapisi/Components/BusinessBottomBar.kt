@@ -110,7 +110,7 @@ fun BusinessBottomBar(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .navigationBarsPadding(),  // ← BURAYA TAŞINDI (eskiden Row'daydı)
+                .navigationBarsPadding(),
             color = NavColors.nav_surface,
             shadowElevation = 0.dp
         ) {
@@ -119,8 +119,7 @@ fun BusinessBottomBar(navController: NavController) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        // navigationBarsPadding() KALDIRILDI → Row artık asla şişmez
-                        .height(contentH)               // heightIn yerine sabit height yeterli
+                        .height(contentH)
                         .padding(horizontal = barHPad),
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
@@ -314,6 +313,8 @@ private fun PopupMenuItem(
 
 // ─── NavController extension ──────────────────────────────────────────────────
 fun NavController.navigateSingleTop(route: String) {
+    val currentRoute = currentBackStackEntry?.destination?.route
+    if (currentRoute == route) return  // ← zaten o sayfadaysa hiçbir şey yapma
     navigate(route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true

@@ -47,7 +47,7 @@ class MenuAddRepository {
             return
         }
 
-        val menuRef = db.collection("Business_Menu").document()
+        val menuRef = db.collection("Business_Menu").document() // önce boş bir document olusturuyoruz daha sonun ıd'sini alyıoruz bunu uuid ilede yapabilirdik bu da farklı kullanımı.
         val documentId = menuRef.id  // ← artık ID'yi biliyoruz
 
         val storageRef=storage.reference
@@ -60,10 +60,12 @@ class MenuAddRepository {
         storageRef.putFile(foodPhoto)
             .addOnSuccessListener {
 
+
                 //Upload başarılıysa
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl->
 
                     val menuData= Menu(
+                        menu_id = documentId,
                         business_id = auth.currentUser!!.uid,
                         food_name=food_name,
                         food_description=food_description,

@@ -14,4 +14,4 @@ data class BusinessInfo(
     val email: String = "",
     val profile_photo: String = ""
 
-)
+): User_Or_Business
