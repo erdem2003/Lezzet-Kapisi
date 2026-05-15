@@ -1,15 +1,16 @@
 package com.bitirmeprojesi.lezzetkapisi.Repository
 
 import android.util.Log
-import com.bitirmeprojesi.lezzetkapisi.CalculatorRetrofit.CommentClient_Instance
-import com.bitirmeprojesi.lezzetkapisi.CalculatorRetrofit.MessageRequest
+import com.bitirmeprojesi.lezzetkapisi.CalculatorRetrofit.CalculatorClient_Instance
+import com.bitirmeprojesi.lezzetkapisi.CalculatorRetrofit.CommentBusinessRequest
+import com.bitirmeprojesi.lezzetkapisi.CalculatorRetrofit.StarBusinessRequest
 import com.bitirmeprojesi.lezzetkapisi.Model.BusinessInfo
 import com.bitirmeprojesi.lezzetkapisi.Model.Business_Comment
+import com.bitirmeprojesi.lezzetkapisi.Model.Business_Stars
 import com.bitirmeprojesi.lezzetkapisi.Model.Menu
 import com.bitirmeprojesi.lezzetkapisi.Model.User
 import com.bitirmeprojesi.lezzetkapisi.Model.User_Or_Business
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.getField
@@ -80,7 +81,7 @@ class BusinessPageRepository {
     suspend fun getCommentList(business_id: String,onError: (String) -> Unit,onSuccess: (List<Business_Comment>) -> Unit){
 
         try {
-            val docs=db.collection("Comments").whereEqualTo("business_id",business_id).get().await()
+            val docs=db.collection("Business_comments").whereEqualTo("business_id",business_id).get().await()
             val list=docs.toObjects<Business_Comment>()
             onSuccess(list)
             return
@@ -99,15 +100,15 @@ class BusinessPageRepository {
             onError("Mesaj yüklenemedi . Kullanıcı tarafında bir sorun var lütfen uygulamanın önbelleğini temizleyiniz.")
         }else{
             try {
-                val response= CommentClient_Instance.commentApi.sendMessage(
-                    MessageRequest(
+                val response= CalculatorClient_Instance.calculatorBusinessApi.sendMessage(
+                    CommentBusinessRequest(
                         sender_id= auth.currentUser!!.uid,
                         business_id= business_id,
                         comment=comment
                     )
                 )
                 if(response.status==true){
-                    val doc=db.collection("Comments").whereEqualTo("comment_id",response.comment_id).get().await().firstOrNull()
+                    val doc=db.collection("Business_comments").whereEqualTo("comment_id",response.comment_id).get().await().firstOrNull()
                     if(doc!=null){
                         val business_comment=doc.toObject(Business_Comment::class.java)
                         onSuccess("Mesaj başarıyla yüklendi",business_comment)
@@ -157,6 +158,50 @@ class BusinessPageRepository {
         }
     }
 
+    suspend fun getBusinessStarForUser(business_id:String,onError: (String) -> Unit,onSuccess:(Business_Stars)->Unit){
+        //İlgili kullanıcının yıldızını çekeceğiz eğer varsa tabiki :)
+        val user_id=auth.currentUser!!.uid
+        val docs=db.collection("Business_stars").whereEqualTo("sender_id",user_id).whereEqualTo("business_id",business_id).get().await()
+
+        if (docs.isEmpty){
+            return
+        }
+
+        val star_doc=docs.documents.get(0)
+        val star_data=star_doc.toObject(Business_Stars::class.java)
+        if (star_data!=null){
+            onSuccess(star_data)
+            //Buraya return gelebilir mi bak ? ! .
+        }else{
+            onError("Yıldız bilgisi çekilirken hata oluştu ")
+        }
+
+    }
+
+    suspend fun sendBusinessStar(business_id: String, starvalue: Double, onError: (String) -> Unit, onSuccess: (Business_Stars) -> Unit){
+
+        val response=CalculatorClient_Instance.calculatorBusinessApi.sendStar(
+            StarBusinessRequest(
+                 sender_id=auth.currentUser!!.uid,
+                 business_id=business_id,
+                 star_value=starvalue,
+            )
+        )
+        if (response.isSuccessful) {
+            val body = response.body()  // StarBusinessResponse objesi
+            if (body != null) {
+                val status = body.status  // body içindeki field'lara böyle erişirsin
+                val star_id=body.star_id
+
+                val docs=db.collection("Business_stars").document(star_id).get().await()
+                val business_star=docs.toObject(Business_Stars::class.java)
+                onSuccess(business_star!!)
+            }
+        } else {
+            onError("Yıldız puanınız gönderilemedi")
+        }
+
+    }
 
 
 

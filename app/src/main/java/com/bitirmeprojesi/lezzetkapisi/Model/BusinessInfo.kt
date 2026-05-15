@@ -12,6 +12,8 @@ data class BusinessInfo(
     val created_date: Timestamp = Timestamp.now(),
     val description: String = "",
     val email: String = "",
-    val profile_photo: String = ""
+    val profile_photo: String = "",
+    val count_star: Int = 0,
+    val total_star: Double = 0.0
 
 ): User_Or_Business

@@ -1,6 +1,6 @@
 package com.bitirmeprojesi.lezzetkapisi.CalculatorRetrofit
 
-data class MessageResponse(
+data class CommentBusinessResponse(
     val status: Boolean,
     val comment_id: String
 )

@@ -205,7 +205,10 @@ class RegisterRepository {
             "profile_photo" to photoUrl,
             "created_date" to Timestamp.now(),
             "average_star" to 0.0,
-            "count_comments" to 0
+            "count_comments" to 0,
+            "total_star" to 0.0,
+            "count_star" to 0
+
         )
 
         db.collection("Business").document(uid).set(business)

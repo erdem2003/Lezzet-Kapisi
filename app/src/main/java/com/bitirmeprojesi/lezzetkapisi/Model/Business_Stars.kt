@@ -2,14 +2,13 @@ package com.bitirmeprojesi.lezzetkapisi.Model
 
 import com.google.firebase.Timestamp
 
-data class Business_Comment(
-    val comment_id: String="",
-    val sender_id: String="",
+data class Business_Stars(
+    val star_id: String="",
     val business_id: String="",
-    val comment: String="",
+    val calculate: Boolean=false,
     val created_date: Timestamp= Timestamp.now(),
-
-
+    val sender_id: String="",
+    val star_value: Double=0.0
 ){
 
 }

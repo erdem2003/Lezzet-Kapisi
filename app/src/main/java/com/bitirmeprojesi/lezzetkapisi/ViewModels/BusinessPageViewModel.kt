@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bitirmeprojesi.lezzetkapisi.Model.BusinessInfo
 import com.bitirmeprojesi.lezzetkapisi.Model.Business_Comment
+import com.bitirmeprojesi.lezzetkapisi.Model.Business_Stars
 import com.bitirmeprojesi.lezzetkapisi.Model.Menu
 import com.bitirmeprojesi.lezzetkapisi.Model.User_Or_Business
 import com.bitirmeprojesi.lezzetkapisi.Repository.BusinessPageRepository
@@ -53,6 +54,12 @@ class BusinessPageViewModel : ViewModel() {
     val user_business_info_map=mutableStateOf< MutableMap<String, User_Or_Business>>(mutableMapOf())
 
     val refresh_progress_bar=mutableStateOf<Boolean>(false)
+
+    //Yıldız işlemleri
+    val user_business_star=mutableStateOf<Business_Stars?>(null)
+    val star_error_message=mutableStateOf<String>("")
+    val star_progress_bar=mutableStateOf<Boolean>(false)
+
 
 
 
@@ -198,18 +205,12 @@ class BusinessPageViewModel : ViewModel() {
         }
     }
 
-
-
-
-
-
-
     fun loadPage(business_id: String) {
         viewModelScope.launch {
             progress_bar.value = true
-            business_info(business_id)
+            business_info(business_id) //Business'ın bilgilerini aldık.
             if (error_message.value==""){ //Sorun yok pipe devam edicek
-                getCityForBusiness()
+                getCityForBusiness()  //Business'ın şehrini aldık
                 if (error_message.value==""){
                     getMenuForBusiness(business_id)
                 }
@@ -231,6 +232,40 @@ class BusinessPageViewModel : ViewModel() {
         getCommentsForBusiness(business_id)
         refresh_progress_bar.value=false
     }
+
+
+
+
+    //Yıldız için
+    fun userBusinessStar(business_id:String){
+        star_progress_bar.value=true
+        viewModelScope.launch {
+            businessPageRepository.getBusinessStarForUser(business_id, onError = { errormsg->
+                star_error_message.value=errormsg
+            }, onSuccess = { business_star->
+                user_business_star.value=business_star
+
+            })
+            star_progress_bar.value=false
+        }
+    }
+
+    fun sendBusinessStar(business_id: String,starValue: Double){
+        star_progress_bar.value=true
+        viewModelScope.launch {
+            businessPageRepository.sendBusinessStar(business_id,starValue, onError = {
+                star_error_message.value=it
+            }, onSuccess = {business_stars->
+                user_business_star.value=business_stars
+            })
+            star_progress_bar.value=false
+        }
+    }
+
+
+
+
+
 
 }
 

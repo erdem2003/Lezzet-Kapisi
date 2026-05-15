@@ -1,7 +1,10 @@
 package com.bitirmeprojesi.lezzetkapisi.Screens
 
 import android.util.Log
-import android.widget.ProgressBar
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -58,6 +62,8 @@ private object BPColors {
     val inactiveYellow   = Color(0xFFF59E0B)
     val inactiveYellowBg = Color(0xFFFEF3C7)
     val starYellow       = Color(0xFFFBBF24)
+    val starYellowLight  = Color(0xFFFEF3C7)
+    val starGray         = Color(0xFFE5E7EB)
     val errorRed         = Color(0xFFEF4444)
     val errorRedBg       = Color(0xFFFEE2E2)
     val successGreen     = Color(0xFF22C55E)
@@ -125,6 +131,7 @@ fun BusinessPageScreen(
     LaunchedEffect(business_id) {
         businessPageViewModel.loadPage(business_id)
         businessPageViewModel.getCommentsForBusiness(business_id)
+        businessPageViewModel.userBusinessStar(business_id)
     }
 
     val businessInfo       by businessPageViewModel.business_info_state
@@ -140,19 +147,23 @@ fun BusinessPageScreen(
     val sendButtonEnabled  by businessPageViewModel.enableSendMessageButton
     val userInfoMap        by businessPageViewModel.user_business_info_map
 
+    // Yıldız state'leri
+    val userStar           by businessPageViewModel.user_business_star
+    val starErrorMsg       by businessPageViewModel.star_error_message
+    val starLoading        by businessPageViewModel.star_progress_bar
+
     // Pull-to-refresh state
     var isRefreshing by remember { mutableStateOf(false) }
 
-    // İki yükleme de bitince refresh spinner'ı kapat
     LaunchedEffect(isLoading, commentListLoading) {
         if (!isLoading && !commentListLoading) {
             isRefreshing = false
         }
     }
 
-    if (businessPageViewModel.refresh_progress_bar.value==true){
+    if (businessPageViewModel.refresh_progress_bar.value) {
         CircularProgressIndicator()
-    }else{
+    } else {
         val snackbarHostState = remember { SnackbarHostState() }
         LaunchedEffect(errorMsg) {
             if (errorMsg.isNotBlank())
@@ -172,7 +183,6 @@ fun BusinessPageScreen(
             bottomBar      = { BusinessBottomBar(navController) }
         ) { innerPadding ->
 
-            // Sadece ilk yüklemede (refresh değilken) tam ekran loading göster
             if (isLoading && !isRefreshing) {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -251,16 +261,21 @@ fun BusinessPageScreen(
                         Spacer(Modifier.height(8.dp))
                         SectionHeader(
                             icon = Icons.Filled.Star,
-                            title = "Yorumlar & Puanlar",
+                            title = "Puanlar & Yorumlar",
                             badge = "${businessInfo?.count_comments ?: 0} yorum"
                         )
                     }
 
-                    // ── 7. Puan Özeti ──────────────────────────────────────────
+                    // ── 7. Yıldız Verme + Ortalama Bölümü ─────────────────────
                     item {
-                        ReviewSummarySection(
-                            averageStar = businessInfo?.average_star ?: 0.0,
-                            commentCount = businessInfo?.count_comments ?: 0
+                        StarRatingSection(
+                            businessInfo  = businessInfo,
+                            userStarValue = userStar?.star_value,
+                            isLoading     = starLoading,
+                            errorMsg      = starErrorMsg,
+                            onStarSend    = { starVal ->
+                                businessPageViewModel.sendBusinessStar(business_id, starVal)
+                            }
                         )
                     }
 
@@ -302,12 +317,11 @@ fun BusinessPageScreen(
                             )
                         }
                     } else {
-                        val displayed = if (showAllComments) commentList else commentList.take(
-                            commentPreviewCount
-                        )
+                        val displayed = if (showAllComments) commentList
+                        else commentList.take(commentPreviewCount)
                         items(displayed, key = { it.comment_id }) { comment ->
                             CommentCard(
-                                comment = comment,
+                                comment    = comment,
                                 senderInfo = userInfoMap[comment.sender_id]
                             )
                             Spacer(Modifier.height(10.dp))
@@ -315,11 +329,11 @@ fun BusinessPageScreen(
                         if (commentList.size > commentPreviewCount) {
                             item {
                                 ShowMoreButton(
-                                    expanded = showAllComments,
-                                    totalCount = commentList.size,
+                                    expanded     = showAllComments,
+                                    totalCount   = commentList.size,
                                     visibleCount = commentPreviewCount,
-                                    label = "yorum",
-                                    onToggle = { showAllComments = !showAllComments }
+                                    label        = "yorum",
+                                    onToggle     = { showAllComments = !showAllComments }
                                 )
                             }
                         }
@@ -330,9 +344,241 @@ fun BusinessPageScreen(
             }
         }
     }
+}
 
+// ─── Yıldız Verme + Ortalama Bölümü ──────────────────────────────────────────
+@Composable
+private fun StarRatingSection(
+    businessInfo  : BusinessInfo?,
+    userStarValue : Double?,          // null = daha önce vermemiş
+    isLoading     : Boolean,
+    errorMsg      : String,
+    onStarSend    : (Double) -> Unit
+) {
+    // Kullanıcının seçtiği geçici yıldız (henüz gönderilmedi)
+    var hoveredStar by remember { mutableStateOf(0) }
 
+    // userStarValue değişince hoveredStar'ı sıfırla
+    LaunchedEffect(userStarValue) { hoveredStar = 0 }
 
+    // Görüntülenecek yıldız: önce verilen, sonra hover, sonra 0
+    val displayedStar = when {
+        userStarValue != null -> userStarValue.toInt()   // kalıcı seçim
+        hoveredStar > 0       -> hoveredStar             // geçici seçim
+        else                  -> 0
+    }
+
+    // Kullanıcı zaten oy verdiyse tekrar gönderemez
+    //val canRate = userStarValue == null && !isLoading
+    val canRate = !isLoading
+
+    Surface(
+        modifier        = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape           = RoundedCornerShape(20.dp),
+        color           = BPColors.surface,
+        shadowElevation = 3.dp
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+
+            // ── Ortalama Puanı ─────────────────────────────────────────────
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier              = Modifier.fillMaxWidth()
+            ) {
+                // Büyük puan sayısı
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text       = String.format("%.1f", businessInfo?.average_star ?: 0.0),
+                        fontSize   = 48.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color      = BPColors.primary,
+                        lineHeight = 52.sp
+                    )
+                    Text(
+                        text     = "/ 5",
+                        fontSize = 13.sp,
+                        color    = BPColors.textSecondary
+                    )
+                }
+
+                // Sağ taraf: yıldızlar + yorum sayısı
+                Column(
+                    modifier              = Modifier.weight(1f),
+                    verticalArrangement   = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Dolu yıldızlar (ortalamaya göre kısmi değil tam/yarım)
+                    val avg = businessInfo?.average_star ?: 0.0
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        repeat(5) { i ->
+                            val filled = i < avg
+                            val halfFilled = !filled && (i < avg + 0.5)
+                            Icon(
+                                imageVector = when {
+                                    filled     -> Icons.Filled.Star
+                                    halfFilled -> Icons.Filled.StarHalf
+                                    else       -> Icons.Outlined.StarBorder
+                                },
+                                contentDescription = null,
+                                tint     = if (filled || halfFilled) BPColors.starYellow
+                                else BPColors.starGray,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+
+                    Text(
+                        text     = "${businessInfo?.count_comments ?: 0} değerlendirme",
+                        fontSize = 12.sp,
+                        color    = BPColors.textSecondary
+                    )
+
+                    // Kaç kişi oy verdi chip
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = BPColors.primaryLight
+                    ) {
+                        Text(
+                            text     = "${businessInfo?.count_star ?: 0} puan verildi",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color    = BPColors.primary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(
+                color    = BPColors.divider,
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 14.dp)
+            )
+
+            // ── Puan Verme Alanı ───────────────────────────────────────────
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier          = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    Icons.Filled.Grade, null,
+                    tint     = BPColors.starYellow,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text       = if (userStarValue != null) "Puanınız" else "Puan Ver",
+                    fontSize   = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = BPColors.textPrimary
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            if (isLoading) {
+                // Sadece yıldız alanında spinner
+                Box(
+                    modifier         = Modifier.fillMaxWidth().height(52.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color       = BPColors.primary,
+                        modifier    = Modifier.size(28.dp),
+                        strokeWidth = 3.dp
+                    )
+                }
+            } else {
+                // 5 yıldız
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment     = Alignment.CenterVertically
+                ) {
+                    repeat(5) { i ->
+                        val starIndex = i + 1
+                        val isSelected = starIndex <= displayedStar
+
+                        val scale by animateFloatAsState(
+                            targetValue = if (isSelected) 1.15f else 1f,
+                            animationSpec = spring(dampingRatio = 0.5f),
+                            label = "starScale"
+                        )
+                        val tintColor by animateColorAsState(
+                            targetValue = if (isSelected) BPColors.starYellow else BPColors.starGray,
+                            animationSpec = tween(150),
+                            label = "starColor"
+                        )
+
+                        Icon(
+                            imageVector        = if (isSelected) Icons.Filled.Star
+                            else Icons.Outlined.StarBorder,
+                            contentDescription = "$starIndex yıldız",
+                            tint               = tintColor,
+                            modifier           = Modifier
+                                .size(44.dp)
+                                .scale(scale)
+                                .padding(2.dp)
+                                .clickable(
+                                    enabled           = canRate,
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication        = null
+                                ) {
+                                    if (canRate) {
+                                        hoveredStar = starIndex
+                                        onStarSend(starIndex.toDouble())
+                                    }
+                                }
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Durum mesajı
+                val statusText = when {
+                    userStarValue != null ->
+                        "✓  ${userStarValue.toInt()} yıldız verdiniz — teşekkürler!"
+                    hoveredStar > 0 -> "Gönderiliyor..."
+                    else -> "Yıldıza dokunarak puan verin"
+                }
+                val statusColor = when {
+                    userStarValue != null -> BPColors.successGreen
+                    hoveredStar > 0       -> BPColors.primary
+                    else                  -> BPColors.textSecondary
+                }
+
+                Text(
+                    text      = statusText,
+                    fontSize  = 12.sp,
+                    color     = statusColor,
+                    fontWeight = if (userStarValue != null) FontWeight.SemiBold else FontWeight.Normal,
+                    modifier  = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+
+                // Hata mesajı
+                if (errorMsg.isNotBlank()) {
+                    Spacer(Modifier.height(6.dp))
+                    Surface(
+                        shape    = RoundedCornerShape(8.dp),
+                        color    = BPColors.errorRedBg,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text     = errorMsg,
+                            fontSize = 12.sp,
+                            color    = BPColors.errorRed,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+    Spacer(Modifier.height(4.dp))
 }
 
 // ─── Yorum Kartı ──────────────────────────────────────────────────────────────
@@ -556,55 +802,6 @@ private fun ReviewInputSection(
             }
         }
     }
-}
-
-// ─── Puan Özet Bölümü ─────────────────────────────────────────────────────────
-@Composable
-private fun ReviewSummarySection(averageStar: Double, commentCount: Int) {
-    Surface(
-        modifier        = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        shape           = RoundedCornerShape(16.dp),
-        color           = BPColors.surface,
-        shadowElevation = 2.dp
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(String.format("%.1f", averageStar),
-                    fontSize = 36.sp, fontWeight = FontWeight.ExtraBold, color = BPColors.primary)
-                Row {
-                    repeat(5) { i ->
-                        Icon(
-                            if (i < averageStar.toInt()) Icons.Filled.Star
-                            else Icons.Outlined.StarBorder,
-                            null, tint = BPColors.starYellow, modifier = Modifier.size(16.dp))
-                    }
-                }
-                Text("$commentCount yorum", fontSize = 11.sp, color = BPColors.textSecondary)
-            }
-            Spacer(Modifier.width(20.dp))
-            VerticalDivider(modifier = Modifier.height(72.dp), color = BPColors.divider)
-            Spacer(Modifier.width(20.dp))
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                repeat(5) { i ->
-                    val star = 5 - i
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("$star", fontSize = 11.sp, color = BPColors.textSecondary,
-                            modifier = Modifier.width(12.dp))
-                        Icon(Icons.Filled.Star, null,
-                            tint = BPColors.starYellow, modifier = Modifier.size(11.dp))
-                        Spacer(Modifier.width(6.dp))
-                        LinearProgressIndicator(
-                            progress   = { if (star == averageStar.toInt()) 0.6f else 0.1f },
-                            modifier   = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(4.dp)),
-                            color      = BPColors.primary,
-                            trackColor = BPColors.primaryLight
-                        )
-                    }
-                }
-            }
-        }
-    }
-    Spacer(Modifier.height(10.dp))
 }
 
 // ─── Ortak Composable'lar ──────────────────────────────────────────────────────
